@@ -199,8 +199,7 @@ class Interpolate(nn.Module):
 
         return x
         
-        
- class ResidualConvUnit(nn.Module):
+class ResidualConvUnit(nn.Module):
     """Residual convolution module.
     """
 
@@ -234,8 +233,8 @@ class Interpolate(nn.Module):
         out = self.conv2(out)
 
         return out + x
-        
- class FeatureFusionBlock(nn.Module):
+       
+class FeatureFusionBlock(nn.Module):
     """Feature fusion block.
     """
 
@@ -266,8 +265,8 @@ class Interpolate(nn.Module):
         )
 
         return output
-        
-        
+
+       
 class MidasNet_Yolo(BaseModel):
     def __init__(self, path=None, features=256, non_negative=True):
         print("Loading weights: ", path)
