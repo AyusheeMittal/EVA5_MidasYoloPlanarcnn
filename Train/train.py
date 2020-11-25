@@ -110,12 +110,16 @@ def train():
     attempt_download(weights)
     if weights.endswith('.pt'):  # pytorch format
         # possible weights are '*.pt', 'yolov3-spp.pt', 'yolov3-tiny.pt' etc.
-        chkpt = torch.load(weights, map_location=device)
+        Midas_state_dict = torch.load(weights, map_location=device)
 
         # load model
         try:  #have to make changes
-            chkpt['model'] = {k: v for k, v in chkpt['model'].items() if model.state_dict()[k].numel() == v.numel()}
-            model.load_state_dict(chkpt['model'], strict=False)
+            model_dict = model.state_dict()
+            midas_weight_dict = { k: v for k, v in Midas_state_dict.items() if k in model_dict}
+            model_dict.update(midas_weight_dict)
+            model.load_state_dict(model_dict, strict=False)
+            #chkpt['model'] = {k: v for k, v in chkpt['model'].items() if model.state_dict()[k].numel() == v.numel()}
+            #model.load_state_dict(chkpt['model'], strict=False)
         except KeyError as e:
             s = "%s is not compatible with %s. Specify --weights '' or specify a --cfg compatible with %s. " \
                 "See https://github.com/ultralytics/yolov3/issues/657" % (opt.weights, opt.cfg, opt.weights)
@@ -394,7 +398,7 @@ if __name__ == '__main__':
     parser.add_argument('--evolve', action='store_true', help='evolve hyperparameters')
     parser.add_argument('--bucket', type=str, default='', help='gsutil bucket')
     parser.add_argument('--cache-images', action='store_true', help='cache images for faster training')
-    parser.add_argument('--weights', type=str, default='weights/yolov3-spp-ultralytics.pt', help='initial weights path')
+    parser.add_argument('--weights', type=str, default='weights/model-f6b98070.pt' , help='initial weights path') #yolov3-spp-ultralytics.pt')
     parser.add_argument('--name', default='', help='renames results.txt to results_name.txt if supplied')
     parser.add_argument('--device', default='', help='device id (i.e. 0 or 0,1 or cpu)')
     parser.add_argument('--adam', action='store_true', help='use adam optimizer')
