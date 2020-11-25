@@ -73,8 +73,8 @@ def train():
     # Configure run
     init_seeds()
     #data_dict = parse_data_cfg(data)
-    train_path = ./customdata/custom_train.txt #data_dict['train']
-    test_path = ./customdata/custom_test.txt #data_dict['valid']
+    train_path = "./customdata/custom_train.txt" #data_dict['train']
+    test_path = "./customdata/custom_test.txt" #data_dict['valid']
     nc = 4 #1 if opt.single_cls else int(data_dict['classes'])  # number of classes
     hyp['cls'] *= nc / 80  # update coco-tuned hyp['cls'] to current dataset
 
