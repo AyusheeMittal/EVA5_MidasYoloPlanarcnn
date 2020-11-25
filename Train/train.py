@@ -4,7 +4,7 @@ import torch.optim as optim
 import torch.optim.lr_scheduler as lr_scheduler
 import os
 from glob import glob
-import torch.utils
+from utils import torch_utils
 
 mixed_precision = True
 try:  # Mixed precision training https://github.com/NVIDIA/apex
