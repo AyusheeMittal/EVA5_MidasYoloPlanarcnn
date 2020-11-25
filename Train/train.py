@@ -122,7 +122,7 @@ def train():
         os.remove(f)
 
     # Initialize model
-    model = MidasNet_Yolo().to(device)
+    model = model.to(device)
 
     # Optimizer
     pg0, pg1, pg2 = [], [], []  # optimizer parameter groups
