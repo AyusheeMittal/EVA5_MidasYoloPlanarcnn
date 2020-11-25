@@ -452,7 +452,7 @@ class MidasNet_Yolo(BaseModel):
 
         out = self.scratch.output_conv(path_1)
         
-        self.load_state_dict(Midas_state_dict, strict= False)
+        #self.load_state_dict(Midas_state_dict, strict= False)
         
         #print(layer_4)
         yolo_layer_head = self.yolo_head(x)                           #13 x 13 x 2048
