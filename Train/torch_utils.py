@@ -1,22 +1,9 @@
 import math
-import os
-import time
 from copy import deepcopy
 
 import torch
-import torch.backends.cudnn as cudnn
 import torch.nn as nn
 import torch.nn.functional as F
-
-
-def init_seeds(seed=0):
-    torch.manual_seed(seed)
-
-    # Remove randomness (may be slower on Tesla GPUs) # https://pytorch.org/docs/stable/notes/randomness.html
-    if seed == 0:
-        cudnn.deterministic = True
-        cudnn.benchmark = False
-      
 
 class ModelEMA:
     """ Model Exponential Moving Average from https://github.com/rwightman/pytorch-image-models
