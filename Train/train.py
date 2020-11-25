@@ -126,17 +126,17 @@ def train():
             raise KeyError(s) from e
 
         # load optimizer
-        if chkpt['optimizer'] is not None:
-            optimizer.load_state_dict(chkpt['optimizer'])
-            best_fitness = chkpt['best_fitness']
+        #if chkpt['optimizer'] is not None:
+            #optimizer.load_state_dict(chkpt['optimizer'])
+            #best_fitness = chkpt['best_fitness']
 
         # load results
-        if chkpt.get('training_results') is not None:
-            with open(results_file, 'w') as file:
-                file.write(chkpt['training_results'])  # write results.txt
+        #if chkpt.get('training_results') is not None:
+            #with open(results_file, 'w') as file:
+                #file.write(chkpt['training_results'])  # write results.txt
 
-        start_epoch = chkpt['epoch'] + 1
-        del chkpt
+        start_epoch = 1
+        del Midas_state_dict #chkpt
 
     elif len(weights) > 0:  # darknet format
         # possible weights are '*.weights', 'yolov3-tiny.conv.15',  'darknet53.conv.74' etc.
