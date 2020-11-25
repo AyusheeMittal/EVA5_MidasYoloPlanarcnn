@@ -6,6 +6,7 @@ import os
 from glob import glob
 import torch
 import math
+import torch.backends.cudnn as cudnn
 
 mixed_precision = True
 try:  # Mixed precision training https://github.com/NVIDIA/apex
@@ -50,6 +51,14 @@ if f:
 # Print focal loss if gamma > 0
 if hyp['fl_gamma']:
     print('Using FocalLoss(gamma=%g)' % hyp['fl_gamma'])
+    
+def init_seeds(seed=0):
+    torch.manual_seed(seed)
+
+    # Remove randomness (may be slower on Tesla GPUs) # https://pytorch.org/docs/stable/notes/randomness.html
+    if seed == 0:
+        cudnn.deterministic = True
+        cudnn.benchmark = False
     
 def select_device(device='', apex=False, batch_size=None):
     # device = 'cpu' or '0' or '0,1,2,3'
