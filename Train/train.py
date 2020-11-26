@@ -8,7 +8,7 @@ import torch
 import math
 import torch.backends.cudnn as cudnn
 import torch.nn
-import Model.MidasNet_Yolo
+import .Model.MidasNet_Yolo
 
 mixed_precision = True
 try:  # Mixed precision training https://github.com/NVIDIA/apex
