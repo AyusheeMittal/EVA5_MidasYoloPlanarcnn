@@ -123,6 +123,7 @@ def train():
         os.remove(f)
 
     # Initialize model
+    print(model)
     #model = model.to(device)
 
     # Optimizer
