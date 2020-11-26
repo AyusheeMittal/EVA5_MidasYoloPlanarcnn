@@ -4,7 +4,6 @@ from copy import deepcopy
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import math
 import torch.backends.cudnn as cudnn
 
 def init_seeds(seed=0):
