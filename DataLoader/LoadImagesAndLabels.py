@@ -89,6 +89,8 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
         # Define midas
         self.midas_files = [x.replace('images', 'midas').replace(os.path.splitext(x)[-1], '.png')
                             for x in self.img_files]
+        
+        print(self.midas_files)
 
         # Rectangular Training  https://github.com/ultralytics/yolov3/issues/232
         if self.rect:
@@ -343,7 +345,7 @@ def load_midas(self, index):
     midas = self.midas[index]
     if midas is None:  # not cached
         midas_path = self.midas_files[index]
-        print(midas_path)
+        #print(midas_path)
         midas = cv2.imread(midas_path)  # BGR
         assert midas is not None, 'Midas Image Not Found ' + midas_path
         h0, w0 = midas.shape[:2]  # orig hw
