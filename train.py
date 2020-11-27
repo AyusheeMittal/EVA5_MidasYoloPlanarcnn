@@ -101,16 +101,17 @@ def train():
         elif 'Conv2d.weight' in k:
             pg1 += [v]  # apply weight_decay
         else:
-            pg0 += [v]  # all else
-            
+            pg0 += [v]  # all else         
 
     if opt.adam:
+        print("adam")
         # hyp['lr0'] *= 0.1  # reduce lr (i.e. SGD=5E-3, Adam=5E-4)
         optimizer = optim.Adam(pg0, lr=hyp['lr0'])
-        print(optimizer)
         # optimizer = AdaBound(pg0, lr=hyp['lr0'], final_lr=0.1)
     else:
+        print("sgd")
         optimizer = optim.SGD(pg0, lr=hyp['lr0'], momentum=hyp['momentum'], nesterov=True)
+    print(optimizer.param_groups)
     optimizer.add_param_group({'params': pg1, 'weight_decay': hyp['weight_decay']})  # add pg1 with weight_decay
     optimizer.add_param_group({'params': pg2})  # add pg2 (biases)
     del pg0, pg1, pg2
