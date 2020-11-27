@@ -89,8 +89,6 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
         # Define midas
         self.midas_files = [x.replace('images', 'midas').replace(os.path.splitext(x)[-1], '.png')
                             for x in self.img_files]
-        
-        print(self.midas_files)
 
         # Rectangular Training  https://github.com/ultralytics/yolov3/issues/232
         if self.rect:
