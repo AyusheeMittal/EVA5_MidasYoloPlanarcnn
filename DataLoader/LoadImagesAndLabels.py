@@ -312,14 +312,14 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
         img = img[:, :, ::-1].transpose(2, 0, 1)  # BGR to RGB, to 3x416x416
         img = np.ascontiguousarray(img)
 
-        return torch.from_numpy(img), labels_out, self.img_files[index], shapes, torch.from_numpy(midas)
+        return torch.from_numpy(img), labels_out, self.img_files[index], shapes#, torch.from_numpy(midas)
 
     @staticmethod
     def collate_fn(batch):
-        img, label, path, shapes, midas = zip(*batch)  # transposed
+        img, label, path, shapes = zip(*batch)  # transposed
         for i, l in enumerate(label):
             l[:, 0] = i  # add target image index for build_targets()
-        return torch.stack(img, 0), torch.cat(label, 0), path, shapes, torch.stack(midas, 0)
+        return torch.stack(img, 0), torch.cat(label, 0), path, shapes#, torch.stack(midas, 0)
 
 
 def load_image(self, index):
