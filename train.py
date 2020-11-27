@@ -115,7 +115,7 @@ def train():
 
     start_epoch = 0
     best_fitness = 0.0
-    attempt_download(weights)
+    #attempt_download(weights)
     if weights.endswith('.pt'):  # pytorch format
         # possible weights are '*.pt', 'yolov3-spp.pt', 'yolov3-tiny.pt' etc.
         Midas_state_dict = torch.load(weights, map_location=device)
