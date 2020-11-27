@@ -342,7 +342,8 @@ def load_midas(self, index):
     # loads 1 image from dataset, returns img, original hw, resized hw
     midas = self.midas[index]
     if midas is None:  # not cached
-        midas_path = self.midas_files[index]
+        midas_path = self.midas_files[index]midas_path)
+        print(midas_path)
         midas = cv2.imread(midas_path)  # BGR
         assert midas is not None, 'Midas Image Not Found ' + midas_path
         h0, w0 = midas.shape[:2]  # orig hw
