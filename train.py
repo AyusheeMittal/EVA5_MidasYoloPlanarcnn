@@ -8,7 +8,7 @@ import torch
 import torch.nn
 from Model import*
 from DataLoader import *
-from utils.torch_utils import select_device, init_seeds, labels_to_class_weights, labels_to_image_weights
+from utils.torch_utils import select_device, init_seeds, labels_to_class_weights, labels_to_image_weights, ModelEMA
 import math
 
 mixed_precision = True
