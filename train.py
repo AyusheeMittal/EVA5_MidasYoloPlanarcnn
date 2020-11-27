@@ -55,7 +55,7 @@ if hyp['fl_gamma']:
     
 def train():
     #cfg = opt.cfg
-    model = opt.model
+    #model = opt.model
     data = opt.data
     epochs = opt.epochs  # 500200 batches at bs 64, 117263 images = 273 epochs
     batch_size = opt.batch_size
