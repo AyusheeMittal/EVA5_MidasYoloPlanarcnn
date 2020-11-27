@@ -103,7 +103,6 @@ def train():
         else:
             pg0 += [v]  # all else
             
-        print(pg0, pg1, pg2)
 
     if opt.adam:
         # hyp['lr0'] *= 0.1  # reduce lr (i.e. SGD=5E-3, Adam=5E-4)
