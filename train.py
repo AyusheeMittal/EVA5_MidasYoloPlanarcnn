@@ -82,8 +82,8 @@ def train():
     # Configure run
     init_seeds()
     #data_dict = parse_data_cfg(data)
-    train_path = "./customdata/custom_train.txt" #data_dict['train']
-    test_path = "./customdata/custom_test.txt" #data_dict['valid']
+    train_path = "./data/customdata/custom_train.txt" #data_dict['train']
+    test_path = "./data/customdata/custom_test.txt" #data_dict['valid']
     nc = 4 #1 if opt.single_cls else int(data_dict['classes'])  # number of classes
     hyp['cls'] *= nc / 80  # update coco-tuned hyp['cls'] to current dataset
 
@@ -106,12 +106,12 @@ def train():
             pg0 += [v]  # all else         
 
     if opt.adam:
-        print("adam")
+        #print("adam")
         # hyp['lr0'] *= 0.1  # reduce lr (i.e. SGD=5E-3, Adam=5E-4)
         optimizer = optim.Adam(pg0, lr=hyp['lr0'])
         # optimizer = AdaBound(pg0, lr=hyp['lr0'], final_lr=0.1)
     else:
-        print("sgd")
+        #print("sgd")
         optimizer = optim.SGD(pg0, lr=hyp['lr0'], momentum=hyp['momentum'], nesterov=True)
     #print(optimizer.param_groups)
     optimizer.add_param_group({'params': pg1, 'weight_decay': hyp['weight_decay']})  # add pg1 with weight_decay
