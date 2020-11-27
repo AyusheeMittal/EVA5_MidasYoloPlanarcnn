@@ -80,7 +80,7 @@ def train():
     hyp['cls'] *= nc / 80  # update coco-tuned hyp['cls'] to current dataset
 
     # Remove previous results
-    for f in glob('*_batch*.png') + glob(results_file):
+    for f in glob.glob('*_batch*.png') + glob.glob(results_file):
         os.remove(f)
 
     # Initialize model
