@@ -91,7 +91,7 @@ def train():
 
     # Initialize model
     model = MidasNet_Yolo().to(device)
-    print(model)
+    #print(model)
 
     # Optimizer
     pg0, pg1, pg2 = [], [], []  # optimizer parameter groups
@@ -102,10 +102,13 @@ def train():
             pg1 += [v]  # apply weight_decay
         else:
             pg0 += [v]  # all else
+            
+        print(pg0, pg1, pg2)
 
     if opt.adam:
         # hyp['lr0'] *= 0.1  # reduce lr (i.e. SGD=5E-3, Adam=5E-4)
         optimizer = optim.Adam(pg0, lr=hyp['lr0'])
+        print(optimizer)
         # optimizer = AdaBound(pg0, lr=hyp['lr0'], final_lr=0.1)
     else:
         optimizer = optim.SGD(pg0, lr=hyp['lr0'], momentum=hyp['momentum'], nesterov=True)
