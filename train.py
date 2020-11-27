@@ -6,7 +6,7 @@ import os
 from glob import glob
 import torch
 import torch.nn
-from utils.torch_utils import select_device
+from utils.torch_utils import select_device, init_seeds
 import math
 
 mixed_precision = True
