@@ -7,6 +7,7 @@ from glob import glob
 import torch
 import torch.nn
 from utils.torch_utils import select_device
+import math
 
 mixed_precision = True
 try:  # Mixed precision training https://github.com/NVIDIA/apex
