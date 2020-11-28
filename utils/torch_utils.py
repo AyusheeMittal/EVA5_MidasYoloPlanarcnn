@@ -8,7 +8,6 @@ import torch.backends.cudnn as cudnn
 
 def init_seeds(seed=0):
     torch.manual_seed(seed)
-
     # Remove randomness (may be slower on Tesla GPUs) # https://pytorch.org/docs/stable/notes/randomness.html
     if seed == 0:
         cudnn.deterministic = True
