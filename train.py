@@ -294,10 +294,9 @@ def train():
 
             # Run model
             pred = model(imgs)
-            print(len(pred))
-            print(pred.shape)
+            print(len(pred[1]))
             # Compute loss
-            loss, loss_items = compute_loss(pred, targets, model)
+            loss, loss_items = compute_loss(pred[1], targets, model)
             if not torch.isfinite(loss):
                 print('WARNING: non-finite loss, ending training ', loss_items)
                 return results
