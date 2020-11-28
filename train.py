@@ -294,7 +294,8 @@ def train():
 
             # Run model
             pred = model(imgs)
-
+            print(len(pred))
+            print(pred.shape)
             # Compute loss
             loss, loss_items = compute_loss(pred, targets, model)
             if not torch.isfinite(loss):
