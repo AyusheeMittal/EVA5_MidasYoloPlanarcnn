@@ -206,7 +206,7 @@ def build_targets(p, targets, model):
         anchors = j.anchor_vec if multi_gpu else j.anchor_vec
 
         # iou of targets-anchors
-        print(p)
+        print(len(p))
         gain[2:] = torch.tensor(p[i].shape)[[3, 2, 3, 2]]  # xyxy gain
         t, a = targets * gain, []
         gwh = t[:, 4:6]
