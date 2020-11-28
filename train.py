@@ -133,6 +133,27 @@ def train():
             model.load_state_dict(model_dict, strict=False)
             #chkpt['model'] = {k: v for k, v in chkpt['model'].items() if model.state_dict()[k].numel() == v.numel()}
             #model.load_state_dict(chkpt['model'], strict=False)
+            
+            
+            # freezing the encoder weights
+            print("freezing the encoder weights")
+            for k, v in dict(model.pretrained.layer1.named_parameters()).items():
+                if ('.weight' in k):
+                    model.state_dict()['pretrained.layer1.' + k].requires_grad = False
+                    
+            for k, v in dict(model.pretrained.layer2.named_parameters()).items():
+                if ('.weight' in k):
+                    model.state_dict()['pretrained.layer2.' + k].requires_grad = False
+                    
+            for k, v in dict(model.pretrained.layer3.named_parameters()).items():
+                if ('.weight' in k):
+                    model.state_dict()['pretrained.layer3.' + k].requires_grad = False
+                    
+            for k, v in dict(model.pretrained.layer4.named_parameters()).items():
+                if ('.weight' in k):
+                    model.state_dict()['pretrained.layer4.' + k].requires_grad = False
+                    
+            print("done")
         except KeyError as e:
             s = "%s is not compatible with %s. Specify --weights '' or specify a --cfg compatible with %s. " \
                 "See https://github.com/ultralytics/yolov3/issues/657" % (opt.weights, opt.cfg, opt.weights)
