@@ -208,6 +208,9 @@ def build_targets(p, targets, model):
         # iou of targets-anchors
         print("printing p length")
         print(len(p))
+        print(p[0].shape)
+        print(p[1].shape)
+        print(p[2].shape)
         gain[2:] = torch.tensor(p[i].shape)[[3, 2, 3, 2]]  # xyxy gain
         t, a = targets * gain, []
         gwh = t[:, 4:6]
