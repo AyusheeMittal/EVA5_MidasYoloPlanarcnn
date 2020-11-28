@@ -175,3 +175,7 @@ def wh_iou(wh1, wh2):
     wh2 = wh2[None]  # [1,M,2]
     inter = torch.min(wh1, wh2).prod(2)  # [N,M]
     return inter / (wh1.prod(2) + wh2.prod(2) - inter)  # iou = inter / (area1 + area2 - inter)
+
+def smooth_BCE(eps=0.1):  # https://github.com/ultralytics/yolov3/issues/238#issuecomment-598028441
+    # return positive, negative label smoothing BCE targets
+    return 1.0 - 0.5 * eps, 0.5 * eps
