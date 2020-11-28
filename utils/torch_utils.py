@@ -121,4 +121,72 @@ def labels_to_image_weights(labels, nc=80, class_weights=np.ones(80)):
     # index = random.choices(range(n), weights=image_weights, k=1)  # weight image sample
     return image_weights
 
+def compute_loss(p, targets, model):  # predictions, targets, model
+    ft = torch.cuda.FloatTensor if p[0].is_cuda else torch.Tensor
+    lcls, lbox, lobj = ft([0]), ft([0]), ft([0])
+    tcls, tbox, indices, anchor_vec = build_targets(p, targets, model)
+    h = model.hyp  # hyperparameters
+    red = 'mean'  # Loss reduction (sum or mean)
+
+    # Define criteria
+    BCEcls = nn.BCEWithLogitsLoss(pos_weight=ft([h['cls_pw']]), reduction=red)
+    BCEobj = nn.BCEWithLogitsLoss(pos_weight=ft([h['obj_pw']]), reduction=red)
+
+    # class label smoothing https://arxiv.org/pdf/1902.04103.pdf eqn 3
+    cp, cn = smooth_BCE(eps=0.0)
+
+    # focal loss
+    g = h['fl_gamma']  # focal loss gamma
+    if g > 0:
+        BCEcls, BCEobj = FocalLoss(BCEcls, g), FocalLoss(BCEobj, g)
+
+    # Compute losses
+    np, ng = 0, 0  # number grid points, targets
+    for i, pi in enumerate(p):  # layer index, layer predictions
+        b, a, gj, gi = indices[i]  # image, anchor, gridy, gridx
+        tobj = torch.zeros_like(pi[..., 0])  # target obj
+        np += tobj.numel()
+
+        # Compute losses
+        nb = len(b)
+        if nb:  # number of targets
+            ng += nb
+            ps = pi[b, a, gj, gi]  # prediction subset corresponding to targets
+            # ps[:, 2:4] = torch.sigmoid(ps[:, 2:4])  # wh power loss (uncomment)
+
+            # GIoU
+            pxy = torch.sigmoid(ps[:, 0:2])  # pxy = pxy * s - (s - 1) / 2,  s = 1.5  (scale_xy)
+            pwh = torch.exp(ps[:, 2:4]).clamp(max=1E3) * anchor_vec[i]
+            pbox = torch.cat((pxy, pwh), 1)  # predicted box
+            giou = bbox_iou(pbox.t(), tbox[i], x1y1x2y2=False, GIoU=True)  # giou computation
+            lbox += (1.0 - giou).sum() if red == 'sum' else (1.0 - giou).mean()  # giou loss
+            tobj[b, a, gj, gi] = (1.0 - model.gr) + model.gr * giou.detach().clamp(0).type(tobj.dtype)  # giou ratio
+
+            if model.nc > 1:  # cls loss (only if multiple classes)
+                t = torch.full_like(ps[:, 5:], cn)  # targets
+                t[range(nb), tcls[i]] = cp
+                lcls += BCEcls(ps[:, 5:], t)  # BCE
+                # lcls += CE(ps[:, 5:], tcls[i])  # CE
+
+            # Append targets to text file
+            # with open('targets.txt', 'a') as file:
+            #     [file.write('%11.5g ' * 4 % tuple(x) + '\n') for x in torch.cat((txy[i], twh[i]), 1)]
+
+        lobj += BCEobj(pi[..., 4], tobj)  # obj loss
+
+    lbox *= h['giou']
+    lobj *= h['obj']
+    lcls *= h['cls']
+    if red == 'sum':
+        bs = tobj.shape[0]  # batch size
+        lobj *= 3 / (6300 * bs) * 2  # 3 / np * 2
+        if ng:
+            lcls *= 3 / ng / model.nc
+            lbox *= 3 / ng
+
+    loss = lbox + lobj + lcls
+    return loss, torch.cat((lbox, lobj, lcls, loss)).detach()
+
+
+
 
