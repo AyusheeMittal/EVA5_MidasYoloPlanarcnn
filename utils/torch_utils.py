@@ -189,4 +189,60 @@ def compute_loss(p, targets, model):  # predictions, targets, model
 
 
 
+def build_targets(p, targets, model):
+    # targets = [image, class, x, y, w, h]
+
+    nt = targets.shape[0]
+    tcls, tbox, indices, av = [], [], [], []
+    reject, use_all_anchors = True, True
+    gain = torch.ones(6, device=targets.device)  # normalized to gridspace gain
+
+    # m = list(model.modules())[-1]
+    # for i in range(m.nl):
+    #    anchors = m.anchors[i]
+    multi_gpu = type(model) in (nn.parallel.DataParallel, nn.parallel.DistributedDataParallel)
+    for i, j in enumerate(model.yolo_layers):
+        # get number of grid points and anchor vec for this yolo layer
+        anchors = model.module.module_list[j].anchor_vec if multi_gpu else model.module_list[j].anchor_vec
+
+        # iou of targets-anchors
+        gain[2:] = torch.tensor(p[i].shape)[[3, 2, 3, 2]]  # xyxy gain
+        t, a = targets * gain, []
+        gwh = t[:, 4:6]
+        if nt:
+            iou = wh_iou(anchors, gwh)  # iou(3,n) = wh_iou(anchors(3,2), gwh(n,2))
+
+            if use_all_anchors:
+                na = anchors.shape[0]  # number of anchors
+                a = torch.arange(na).view(-1, 1).repeat(1, nt).view(-1)
+                t = t.repeat(na, 1)
+            else:  # use best anchor only
+                iou, a = iou.max(0)  # best iou and anchor
+
+            # reject anchors below iou_thres (OPTIONAL, increases P, lowers R)
+            if reject:
+                j = iou.view(-1) > model.hyp['iou_t']  # iou threshold hyperparameter
+                t, a = t[j], a[j]
+
+        # Indices
+        b, c = t[:, :2].long().t()  # target image, class
+        gxy = t[:, 2:4]  # grid x, y
+        gwh = t[:, 4:6]  # grid w, h
+        gi, gj = gxy.long().t()  # grid x, y indices
+        indices.append((b, a, gj, gi))
+
+        # Box
+        gxy -= gxy.floor()  # xy
+        tbox.append(torch.cat((gxy, gwh), 1))  # xywh (grids)
+        av.append(anchors[a])  # anchor vec
+
+        # Class
+        tcls.append(c)
+        if c.shape[0]:  # if any targets
+            assert c.max() < model.nc, 'Model accepts %g classes labeled from 0-%g, however you labelled a class %g. ' \
+                                       'See https://github.com/ultralytics/yolov3/wiki/Train-Custom-Data' % (
+                                           model.nc, model.nc - 1, c.max())
+
+    return tcls, tbox, indices, av
+
 
