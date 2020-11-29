@@ -4,7 +4,7 @@ import json
 from torch.utils.data import DataLoader
 
 from Model import *
-from Dataloader import *
+from DataLoader import *
 from utils.utils import *
 
 
