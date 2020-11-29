@@ -474,17 +474,17 @@ class MidasNet_Yolo(BaseModel):
         yolo_layer2_5 = self.yolo2_hack(yolo_layer2_4)                # 52 x 52 x 27
         yolo_layer2_out = self.yolo2_class(yolo_layer2_5, out)        # 3 x 52 x 52 x 9
 
-        yolo2_out_temp = [torch.unsqueeze(item, dim=0) for item in yolo_layer2_out]
-        yolo2_out_final = torch.stack(yolo2_out_temp, dim=1)
-        yolo2_out_final = torch.squeeze(yolo2_out_final, dim=0)
+        #yolo2_out_temp = [torch.unsqueeze(item, dim=0) for item in yolo_layer2_out]
+        #yolo2_out_final = torch.stack(yolo2_out_temp, dim=1)
+        #yolo2_out_final = torch.squeeze(yolo2_out_final, dim=0)
             
-        yolo3_out_temp = [torch.unsqueeze(item, dim=0) for item in yolo_layer3_out]
-        yolo3_out_final = torch.stack(yolo3_out_temp, dim=1)
-        yolo3_out_final = torch.squeeze(yolo3_out_final, dim=0)
+        #yolo3_out_temp = [torch.unsqueeze(item, dim=0) for item in yolo_layer3_out]
+        #yolo3_out_final = torch.stack(yolo3_out_temp, dim=1)
+        #yolo3_out_final = torch.squeeze(yolo3_out_final, dim=0)
             
-        yolo4_out_temp = [torch.unsqueeze(item, dim=0) for item in yolo_layer4_out]
-        yolo4_out_final = torch.stack(yolo4_out_temp, dim=1)
-        yolo4_out_final = torch.squeeze(yolo4_out_final, dim=0)
+        #yolo4_out_temp = [torch.unsqueeze(item, dim=0) for item in yolo_layer4_out]
+        #yolo4_out_final = torch.stack(yolo4_out_temp, dim=1)
+        #yolo4_out_final = torch.squeeze(yolo4_out_final, dim=0)
 
         return torch.squeeze(out, dim=1), [yolo_layer4_out, yolo_layer3_out, yolo_layer2_out]
         
