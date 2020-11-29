@@ -12,6 +12,8 @@ from utils.torch_utils import select_device, init_seeds, ModelEMA
 from utils.utils import labels_to_class_weights, labels_to_image_weights, compute_loss
 import math
 
+import test
+
 mixed_precision = True
 try:  # Mixed precision training https://github.com/NVIDIA/apex
     from apex import amp
