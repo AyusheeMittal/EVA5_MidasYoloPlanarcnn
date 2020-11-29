@@ -486,6 +486,6 @@ class MidasNet_Yolo(BaseModel):
         yolo4_out_final = torch.stack(yolo4_out_temp, dim=1)
         yolo4_out_final = torch.squeeze(yolo4_out_final, dim=0)
 
-        return torch.squeeze(out, dim=1), [yolo4_out_final, yolo3_out_final, yolo2_out_final]
+        return torch.squeeze(out, dim=1), [yolo_layer4_out, yolo_layer3_out, yolo_layer2_out]
         
   
