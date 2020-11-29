@@ -67,7 +67,8 @@ def train():
     epochs = opt.epochs  # 500200 batches at bs 64, 117263 images = 273 epochs
     batch_size = opt.batch_size
     accumulate = opt.accumulate  # effective bs = batch_size * accumulate = 16 * 4 = 64
-    weights = opt.weights  # initial training weights
+    weights_yolo = opt.weights_yolo  # initial training weights
+    weights_midas = opt.weights_midas  # initial training weights
     imgsz_min, imgsz_max, imgsz_test = opt.img_size  # img sizes (min, max, test)
 
     # Image Sizes
@@ -124,9 +125,57 @@ def train():
     start_epoch = 0
     best_fitness = 0.0
     #attempt_download(weights)
-    if weights.endswith('.pt'):  # pytorch format
+    if weights_yolo.endswith('.pt'):
         # possible weights are '*.pt', 'yolov3-spp.pt', 'yolov3-tiny.pt' etc.
-        Midas_state_dict = torch.load(weights, map_location=device)
+        Yolo_state_dict = torch.load(weights_yolo, map_location=device)['model']
+        #mapping yolo layers
+        layers_mapping = {'yolo4_hack.0.weight' : 'module_list.88.Conv2d.weight',
+                            'yolo4_class' : 'module_list.89.Conv2d.weight',
+                            'yolo3_2.0.weight' : 'module_list.90.Conv2d.weight',
+                            'yolo3_1.1.weight' : 'module_list.91.Conv2d.weight',
+                            'yolo3_1.0.weight' : 'module_list.92.Conv2d.weight',
+                            #: module_list.93.weight',
+                            'yolo3_3.0.weight' : 'module_list.94.Conv2d.weight',
+                            'yolo3_3.3.weight' : 'module_list.95.Conv2d.weight',
+                            'yolo3_3.6.weight' : 'module_list.96.Conv2d.weight',
+                            'yolo3_3.9.weight' : 'module_list.97.Conv2d.weight',
+                            'yolo3_3.12.weight' : 'module_list.98.Conv2d.weight',
+                            'yolo3_3.15.weight' : 'module_list.99.Conv2d.weight',
+                            'yolo3_hack.0.weight' : 'module_list.100.Conv2d.weight',
+                            'yolo3_class' : 'module_list.101.Conv2d.weight',
+                            'yolo2_1.0.weight' : 'module_list.102.Conv2d.weight',
+                            'yolo2_2.1.weight' : 'module_list.103.Conv2d.weight',
+                            'yolo2_2.0.weight' : 'module_list.104.Conv2d.weight',
+                            #: module_list.105,
+                            'yolo2_3.0.weight' : 'module_list.106.Conv2d.weight',
+                            'yolo2_3.3.weight' : 'module_list.107.Conv2d.weight',
+                            'yolo2_3.6.weight' : 'module_list.108.Conv2d.weight',
+                            'yolo2_3.9.weight' : 'module_list.109.Conv2d.weight',
+                            'yolo2_3.12.weight' : 'module_list.110.Conv2d.weight',
+                            'yolo2_3.15.weight' : 'module_list.111.Conv2d.weight',
+                            'yolo2_hack.0.weight' : 'module_list.112.Conv2d.weight',
+                            'yolo2_class' : 'module_list.113.Conv2d.weight'
+                         }
+        yolo_weight_dict = { k: v for k, v in Yolo_state_dict.items() if k in layers_mapping.values()}
+         # load model
+        try:  #have to make changes
+            model_dict = model.state_dict()
+            yolo_dict = {}
+            for k, v in layers_mapping.items():
+                for k2,v2 in yolo_weight_dict.items():
+                    if( v == k2 and model_dict[k].numel() == v2.numel()):
+                        yolo_dict[k] = v2
+            model_dict.update(yolo_dict)
+            model.load_state_dict(model_dict, strict=False)
+        except KeyError as e:
+            s = "%s is not compatible with %s. Specify --weights '' or specify a --cfg compatible with %s. " \
+                "See https://github.com/ultralytics/yolov3/issues/657" % (opt.weights_yolo, opt.cfg, opt.weights_yolo)
+            raise KeyError(s) from e
+            
+            
+    if weights_midas.endswith('.pt'):  # pytorch format
+        # possible weights are '*.pt', 'yolov3-spp.pt', 'yolov3-tiny.pt' etc.
+        Midas_state_dict = torch.load(weights_midas, map_location=device)
 
         # load model
         try:  #have to make changes
@@ -159,7 +208,7 @@ def train():
             print("done")
         except KeyError as e:
             s = "%s is not compatible with %s. Specify --weights '' or specify a --cfg compatible with %s. " \
-                "See https://github.com/ultralytics/yolov3/issues/657" % (opt.weights, opt.cfg, opt.weights)
+                "See https://github.com/ultralytics/yolov3/issues/657" % (opt.weights_midas, opt.cfg, opt.weights_midas)
             raise KeyError(s) from e
 
         # load optimizer
@@ -175,9 +224,9 @@ def train():
         start_epoch = 1
         del Midas_state_dict #chkpt
 
-    elif len(weights) > 0:  # darknet format
+    #elif len(weights) > 0:  # darknet format
         # possible weights are '*.weights', 'yolov3-tiny.conv.15',  'darknet53.conv.74' etc.
-        load_darknet_weights(model, weights)
+        #load_darknet_weights(model, weights)
 
     # Mixed precision training https://github.com/NVIDIA/apex
     if mixed_precision:
@@ -434,13 +483,14 @@ if __name__ == '__main__':
     parser.add_argument('--evolve', action='store_true', help='evolve hyperparameters')
     parser.add_argument('--bucket', type=str, default='', help='gsutil bucket')
     parser.add_argument('--cache-images', action='store_true', help='cache images for faster training')
-    parser.add_argument('--weights', type=str, default='weights/model-f6b98070.pt' , help='initial weights path') #yolov3-spp-ultralytics.pt')
+    parser.add_argument('--weights_yolo', type=str, default='weights/yolov3-spp-ultralytics.pt' , help='initial yolo weights path') 
+    parser.add_argument('--weights_midas', type=str, default='weights/model-f6b98070.pt' , help='initial midas weights path')
     parser.add_argument('--name', default='', help='renames results.txt to results_name.txt if supplied')
     parser.add_argument('--device', default='', help='device id (i.e. 0 or 0,1 or cpu)')
     parser.add_argument('--adam', action='store_true', help='use adam optimizer')
     parser.add_argument('--single-cls', action='store_true', help='train as single-class dataset')
     opt = parser.parse_args()
-    opt.weights = last if opt.resume else opt.weights
+    opt.weights_yolo = last if opt.resume else opt.weights_yolo
     print(opt)
     opt.img_size.extend([opt.img_size[-1]] * (3 - len(opt.img_size)))  # extend to 3 sizes (min, max, test)
     device = select_device(opt.device, apex=mixed_precision, batch_size=opt.batch_size)
