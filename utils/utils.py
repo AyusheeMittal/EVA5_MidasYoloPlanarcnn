@@ -501,7 +501,7 @@ def compute_ap(recall, precision):
 
     return ap
 
-def fitness(k):  # mutation fitness
-    iou = wh_iou(wh, torch.Tensor(k))  # iou
-    max_iou = iou.max(1)[0]
-    return (max_iou * (max_iou > thr).float()).mean()  # product
+def fitness(x):
+    # Returns fitness (for use with results.txt or evolve.txt)
+    w = [0.0, 0.01, 0.99, 0.00]  # weights for [P, R, mAP, F1]@0.5 or [P, R, mAP@0.5, mAP@0.5:0.95]
+    return (x[:, :4] * w).sum(1)
