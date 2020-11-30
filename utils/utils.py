@@ -473,3 +473,30 @@ def ap_per_class(tp, conf, pred_cls, target_cls):
 
     return p, r, ap, f1, unique_classes.astype('int32')
 
+def compute_ap(recall, precision):
+    """ Compute the average precision, given the recall and precision curves.
+    Source: https://github.com/rbgirshick/py-faster-rcnn.
+    # Arguments
+        recall:    The recall curve (list).
+        precision: The precision curve (list).
+    # Returns
+        The average precision as computed in py-faster-rcnn.
+    """
+
+    # Append sentinel values to beginning and end
+    mrec = np.concatenate(([0.], recall, [min(recall[-1] + 1E-3, 1.)]))
+    mpre = np.concatenate(([0.], precision, [0.]))
+
+    # Compute the precision envelope
+    mpre = np.flip(np.maximum.accumulate(np.flip(mpre)))
+
+    # Integrate area under curve
+    method = 'interp'  # methods: 'continuous', 'interp'
+    if method == 'interp':
+        x = np.linspace(0, 1, 101)  # 101-point interp (COCO)
+        ap = np.trapz(np.interp(x, mrec, mpre), x)  # integrate
+    else:  # 'continuous'
+        i = np.where(mrec[1:] != mrec[:-1])[0]  # points where x axis (recall) changes
+        ap = np.sum((mrec[i + 1] - mrec[i]) * mpre[i + 1])  # area under curve
+
+    return ap
