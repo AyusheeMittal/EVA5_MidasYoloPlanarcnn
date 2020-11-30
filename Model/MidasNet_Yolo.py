@@ -432,8 +432,43 @@ class MidasNet_Yolo(BaseModel):
         if path:
             self.load(path)
 
-    def forward(self, x):
-        out = []
+    def forward(self, x, augment=False, verbose=False):
+        if not augment:
+            return self.forward_once(x)
+        else:  # Augment images (inference and test only) https://github.com/ultralytics/yolov3/issues/931
+            img_size = x.shape[-2:]  # height, width
+            s = [0.83, 0.67]  # scales
+            y = []
+            for i, xi in enumerate((x,
+                                    torch_utils.scale_img(x.flip(3), s[0], same_shape=False),  # flip-lr and scale
+                                    torch_utils.scale_img(x, s[1], same_shape=False),  # scale
+                                    )):
+                # cv2.imwrite('img%g.jpg' % i, 255 * xi[0].numpy().transpose((1, 2, 0))[:, :, ::-1])
+                y.append(self.forward_once(xi)[0])
+
+            y[1][..., :4] /= s[0]  # scale
+            y[1][..., 0] = img_size[1] - y[1][..., 0]  # flip lr
+            y[2][..., :4] /= s[1]  # scale
+            
+            y = torch.cat(y, 1)
+            return y, None
+
+    def forward_once(self, x, augment=False, verbose=False):
+        img_size = x.shape[-2:]  # height, width
+        yolo_out, out = [], []
+        if verbose:
+            print('0', x.shape)
+            str = ''
+
+        # Augment images (inference and test only)
+        if augment:  # https://github.com/ultralytics/yolov3/issues/931
+            nb = x.shape[0]  # batch size
+            s = [0.83, 0.67]  # scales
+            x = torch.cat((x,
+                           torch_utils.scale_img(x.flip(3), s[0]),  # flip-lr and scale
+                           torch_utils.scale_img(x, s[1]),  # scale
+                           ), 0)
+        yolo_out, out = [], []
         #print(x)
         layer_1 = self.pretrained.layer1(x)
         layer_2 = self.pretrained.layer2(layer_1)
@@ -450,7 +485,7 @@ class MidasNet_Yolo(BaseModel):
         path_2 = self.scratch.refinenet2(path_3, layer_2_rn)
         path_1 = self.scratch.refinenet1(path_2, layer_1_rn)
 
-        out = self.scratch.output_conv(path_1)
+        output = self.scratch.output_conv(path_1)
         
         #self.load_state_dict(Midas_state_dict, strict= False)
         
@@ -485,7 +520,31 @@ class MidasNet_Yolo(BaseModel):
         #yolo4_out_temp = [torch.unsqueeze(item, dim=0) for item in yolo_layer4_out]
         #yolo4_out_final = torch.stack(yolo4_out_temp, dim=1)
         #yolo4_out_final = torch.squeeze(yolo4_out_final, dim=0)
+        
+        yolo_out.append(yolo_layer4_out)
+        yolo_out.append(yolo_layer3_out)
+        yolo_out.append(yolo_layer2_out)
+        
+        if self.training:  # train
+            return torch.squeeze(output, dim=1), yolo_out
+        elif ONNX_EXPORT:  # export
+            x = [torch.cat(x, 0) for x in zip(*yolo_out)]
+            return x[0], torch.cat(x[1:3], 1)  # scores, boxes: 3780x80, 3780x4
+        else:  # inference or test
+            x, p = zip(*yolo_out)  # inference output, training output
+            x = torch.cat(x, 1)  # cat yolo outputs
+            if augment:  # de-augment results
+                x = torch.split(x, nb, dim=0)
+                x[1][..., :4] /= s[0]  # scale
+                x[1][..., 0] = img_size[1] - x[1][..., 0]  # flip lr
+                x[2][..., :4] /= s[1]  # scale
+                x = torch.cat(x, 1)
+            return x, p
+        
 
-        return torch.squeeze(out, dim=1), [yolo_layer4_out, yolo_layer3_out, yolo_layer2_out]
+        #return torch.squeeze(output, dim=1), [yolo_layer4_out, yolo_layer3_out, yolo_layer2_out]
+           
+    
+        
         
   
