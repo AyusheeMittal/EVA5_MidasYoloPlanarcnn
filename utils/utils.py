@@ -505,3 +505,21 @@ def fitness(x):
     # Returns fitness (for use with results.txt or evolve.txt)
     w = [0.0, 0.01, 0.99, 0.00]  # weights for [P, R, mAP, F1]@0.5 or [P, R, mAP@0.5, mAP@0.5:0.95]
     return (x[:, :4] * w).sum(1)
+
+def print_model_biases(model):
+    # prints the bias neurons preceding each yolo layer
+    print('\nModel Bias Summary: %8s%18s%18s%18s' % ('layer', 'regression', 'objectness', 'classification'))
+    try:
+        multi_gpu = type(model) in (nn.parallel.DataParallel, nn.parallel.DistributedDataParallel)
+        for l in model.yolo_layers:  # print pretrained biases
+            if multi_gpu:
+                na = model.module.module_list[l].na  # number of anchors
+                b = model.module.module_list[l - 1][0].bias.view(na, -1)  # bias 3x85
+            else:
+                na = model.module_list[l].na
+                b = model.module_list[l - 1][0].bias.view(na, -1)  # bias 3x85
+            print(' ' * 20 + '%8g %18s%18s%18s' % (l, '%5.2f+/-%-5.2f' % (b[:, :4].mean(), b[:, :4].std()),
+                                                   '%5.2f+/-%-5.2f' % (b[:, 4].mean(), b[:, 4].std()),
+                                                   '%5.2f+/-%-5.2f' % (b[:, 5:].mean(), b[:, 5:].std())))
+    except:
+        pass
