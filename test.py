@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 from Model import *
 from DataLoader import *
 from utils.utils import *
-
+from utils.torch_utils import *
 
 def test(data,
          weights=None,
