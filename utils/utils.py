@@ -302,3 +302,80 @@ def xywh2xyxy(x):
     y[:, 2] = x[:, 0] + x[:, 2] / 2  # bottom right x
     y[:, 3] = x[:, 1] + x[:, 3] / 2  # bottom right y
     return y
+
+def non_max_suppression(prediction, conf_thres=0.1, iou_thres=0.6, multi_label=True, classes=None, agnostic=False):
+    """
+    Performs  Non-Maximum Suppression on inference results
+    Returns detections with shape:
+        nx6 (x1, y1, x2, y2, conf, cls)
+    """
+
+    # Box constraints
+    min_wh, max_wh = 2, 4096  # (pixels) minimum and maximum box width and height
+
+    method = 'merge'
+    nc = prediction[0].shape[1] - 5  # number of classes
+    multi_label &= nc > 1  # multiple labels per box
+    output = [None] * len(prediction)
+
+    for xi, x in enumerate(prediction):  # image index, image inference
+        # Apply conf constraint
+        x = x[x[:, 4] > conf_thres]
+
+        # Apply width-height constraint
+        x = x[((x[:, 2:4] > min_wh) & (x[:, 2:4] < max_wh)).all(1)]
+
+        # If none remain process next image
+        if not x.shape[0]:
+            continue
+
+        # Compute conf
+        x[..., 5:] *= x[..., 4:5]  # conf = obj_conf * cls_conf
+
+        # Box (center x, center y, width, height) to (x1, y1, x2, y2)
+        box = xywh2xyxy(x[:, :4])
+
+        # Detections matrix nx6 (xyxy, conf, cls)
+        if multi_label:
+            i, j = (x[:, 5:] > conf_thres).nonzero().t()
+            x = torch.cat((box[i], x[i, j + 5].unsqueeze(1), j.float().unsqueeze(1)), 1)
+        else:  # best class only
+            conf, j = x[:, 5:].max(1)
+            x = torch.cat((box, conf.unsqueeze(1), j.float().unsqueeze(1)), 1)
+
+        # Filter by class
+        if classes:
+            x = x[(j.view(-1, 1) == torch.tensor(classes, device=j.device)).any(1)]
+
+        # Apply finite constraint
+        if not torch.isfinite(x).all():
+            x = x[torch.isfinite(x).all(1)]
+
+        # If none remain process next image
+        n = x.shape[0]  # number of boxes
+        if not n:
+            continue
+
+        # Sort by confidence
+        # if method == 'fast_batch':
+        #    x = x[x[:, 4].argsort(descending=True)]
+
+        # Batched NMS
+        c = x[:, 5] * 0 if agnostic else x[:, 5]  # classes
+        boxes, scores = x[:, :4].clone() + c.view(-1, 1) * max_wh, x[:, 4]  # boxes (offset by class), scores
+        if method == 'merge':  # Merge NMS (boxes merged using weighted mean)
+            i = torchvision.ops.boxes.nms(boxes, scores, iou_thres)
+            if n < 1E4:  # update boxes as boxes(i,4) = weights(i,n) * boxes(n,4)
+                # weights = (box_iou(boxes, boxes).tril_() > iou_thres) * scores.view(-1, 1)  # box weights
+                # weights /= weights.sum(0)  # normalize
+                # x[:, :4] = torch.mm(weights.T, x[:, :4])
+                weights = (box_iou(boxes[i], boxes) > iou_thres).float() * scores[None]  # box weights
+                x[i, :4] = torch.mm(weights / weights.sum(1, keepdim=True), x[:, :4]).float()  # merged boxes
+        elif method == 'vision':
+            i = torchvision.ops.boxes.nms(boxes, scores, iou_thres)
+        elif method == 'fast':  # FastNMS from https://github.com/dbolya/yolact
+            iou = box_iou(boxes, boxes).triu_(diagonal=1)  # upper triangular iou matrix
+            i = iou.max(0)[0] < iou_thres
+
+        output[xi] = x[i]
+    return output
