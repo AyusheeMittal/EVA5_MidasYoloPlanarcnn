@@ -294,7 +294,7 @@ def plot_images(imgs, targets, paths=None, fname='images.png'):
     fig.savefig(fname, dpi=200)
     plt.close()
 
-    def xywh2xyxy(x):
+def xywh2xyxy(x):
     # Transform box coordinates from [x, y, w, h] to [x1, y1, x2, y2] (where xy1=top-left, xy2=bottom-right)
     y = torch.zeros_like(x) if isinstance(x, torch.Tensor) else np.zeros_like(x)
     y[:, 0] = x[:, 0] - x[:, 2] / 2  # top left x
