@@ -500,3 +500,8 @@ def compute_ap(recall, precision):
         ap = np.sum((mrec[i + 1] - mrec[i]) * mpre[i + 1])  # area under curve
 
     return ap
+
+    def fitness(k):  # mutation fitness
+        iou = wh_iou(wh, torch.Tensor(k))  # iou
+        max_iou = iou.max(1)[0]
+        return (max_iou * (max_iou > thr).float()).mean()  # product
