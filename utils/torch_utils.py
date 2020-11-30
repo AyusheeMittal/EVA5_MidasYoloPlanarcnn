@@ -91,4 +91,6 @@ class ModelEMA:
             if not k.startswith('_'):
                 setattr(self.ema, k, getattr(model, k))
                 
-               
+def time_synchronized():
+    torch.cuda.synchronize() if torch.cuda.is_available() else None
+    return time.time()           
