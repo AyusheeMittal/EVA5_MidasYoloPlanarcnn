@@ -21,7 +21,7 @@ def test(data,
          dataloader=None):
     # Initialize/load model and set device
     if model is None:
-        device = torch_utils.select_device(opt.device, batch_size=batch_size)
+        device = select_device(opt.device, batch_size=batch_size)
         verbose = opt.task == 'test'
 
         # Remove previous
@@ -89,18 +89,18 @@ def test(data,
         # Disable gradients
         with torch.no_grad():
             # Run model
-            t = torch_utils.time_synchronized()
+            t = time_synchronized()
             inf_out, train_out = model(imgs, augment=augment)  # inference and training outputs
-            t0 += torch_utils.time_synchronized() - t
+            t0 += time_synchronized() - t
 
             # Compute loss
             if hasattr(model, 'hyp'):  # if model has loss hyperparameters
                 loss += compute_loss(train_out, targets, model)[1][:3]  # GIoU, obj, cls
 
             # Run NMS
-            t = torch_utils.time_synchronized()
+            t = time_synchronized()
             output = non_max_suppression(inf_out, conf_thres=conf_thres, iou_thres=iou_thres)  # nms
-            t1 += torch_utils.time_synchronized() - t
+            t1 += time_synchronized() - t
 
         # Statistics per image
         for si, pred in enumerate(output):
