@@ -668,7 +668,9 @@ def create_folder(path='./new_folder'):
         shutil.rmtree(path)  # delete output folder
     os.makedirs(path)  # make new output folder
     
- class LoadImages:  # for inference
+    
+
+class LoadImages:  # for inference
     def __init__(self, path, img_size=416):
         path = str(Path(path))  # os-agnostic
         files = []
@@ -742,4 +744,3 @@ def create_folder(path='./new_folder'):
 
     def __len__(self):
         return self.nF  # number of files
-
