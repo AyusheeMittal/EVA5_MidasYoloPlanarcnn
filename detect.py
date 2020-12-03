@@ -22,7 +22,7 @@ def detect(save_img=False):
     model = MidasNet_Yolo().to(device) #Darknet(opt.cfg, img_size)
 
     # Load weights
-    attempt_download(weights)
+    #attempt_download(weights)
     if weights.endswith('.pt'):  # pytorch format
         model.load_state_dict(torch.load(weights, map_location=device)['model'])
 
