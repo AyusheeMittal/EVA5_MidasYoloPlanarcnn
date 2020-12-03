@@ -18,7 +18,7 @@ from torch.autograd import Variable
 #from roialign.roi_align.crop_and_resize import CropAndResizeFunction
 import cv2
 #from models.modules import *
-#from utils import *
+from .utils import *
 from .config import *
 
 ONNX_EXPORT = False
@@ -614,7 +614,7 @@ class MainModel(BaseModel):
         self.fpn = FPN(C2, C3, C4, C5, out_channels=256, bilinear_upsampling=self.config.BILINEAR_UPSAMPLING)
 
         ## Generate Anchors
-        self.anchors = Variable(torch.from_numpy(utils.generate_pyramid_anchors(config.RPN_ANCHOR_SCALES,
+        self.anchors = Variable(torch.from_numpy(generate_pyramid_anchors(config.RPN_ANCHOR_SCALES,
                                                                                 config.RPN_ANCHOR_RATIOS,
                                                                                 config.BACKBONE_SHAPES,
                                                                                 config.BACKBONE_STRIDES,
@@ -1702,7 +1702,7 @@ def detection_target_layer(proposals, gt_class_ids, gt_boxes, gt_masks, gt_param
         roi_gt_parameters = gt_parameters[roi_gt_box_assignment.data]
         
         ## Compute bbox refinement for positive ROIs
-        deltas = Variable(utils.box_refinement(positive_rois.data, roi_gt_boxes.data), requires_grad=False)
+        deltas = Variable(box_refinement(positive_rois.data, roi_gt_boxes.data), requires_grad=False)
         std_dev = Variable(torch.from_numpy(config.BBOX_STD_DEV).float(), requires_grad=False)
         if config.GPU_COUNT:
             std_dev = std_dev.cuda()
@@ -2863,7 +2863,7 @@ def mold_inputs(config, images):
     for image in images:
         ## Resize image to fit the model expected size
         ## TODO: move resizing to mold_image()
-        molded_image, window, scale, padding = utils.resize_image(
+        molded_image, window, scale, padding = resize_image(
             image,
             min_dim=config.IMAGE_MIN_DIM,
             max_dim=config.IMAGE_MAX_DIM,
@@ -2951,7 +2951,7 @@ def unmold_detections(config, detections, mrcnn_mask, image_shape, window, debug
     full_masks = []
     for i in range(N):
         ## Convert neural network mask to full size mask
-        full_mask = utils.unmold_mask(masks[i], boxes[i], image_shape)
+        full_mask = unmold_mask(masks[i], boxes[i], image_shape)
         full_masks.append(full_mask)
     full_masks = np.stack(full_masks, axis=-1)\
         if full_masks else np.empty((0,) + masks.shape[1:3])
