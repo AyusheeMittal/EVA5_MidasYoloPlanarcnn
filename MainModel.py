@@ -19,7 +19,7 @@ from torch.autograd import Variable
 import cv2
 #from models.modules import *
 #from utils import *
-#from config import *
+from .config import *
 
 ONNX_EXPORT = False
 
