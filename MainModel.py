@@ -452,7 +452,7 @@ class MainModel(BaseModel):
         if path:
             self.load(path)
        
-        self.config = config.Config() #config
+        self.config = Config() #config
         self.model_dir = 'test'
         self.set_log_dir()
         self.initialize_weights()
