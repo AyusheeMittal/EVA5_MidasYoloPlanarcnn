@@ -455,6 +455,7 @@ class MainModel(BaseModel):
         self.config = Config() #config
         self.model_dir = 'test'
         self.set_log_dir()
+        self.build(self.config, self.pretrained.layer1, self.pretrained.layer2, self.pretrained.layer3, self.pretrained.layer4)
         self.initialize_weights()
         self.loss_history = []
         self.val_loss_history = []
@@ -552,10 +553,10 @@ class MainModel(BaseModel):
         yolo_out.append(yolo_layer3_out)
         yolo_out.append(yolo_layer2_out)
         
-        planar = build(self.config, layer_1, layer_2, layer_3, layer_4)
+        #planar = build(self.config, layer_1, layer_2, layer_3, layer_4)
         
         if self.training:  # train
-            return torch.squeeze(output, dim=1), yolo_out, planar
+            return torch.squeeze(output, dim=1), yolo_out#, planar
         elif ONNX_EXPORT:  # export
             x = [torch.cat(x, 0) for x in zip(*yolo_out)]
             return x[0], torch.cat(x[1:3], 1)  # scores, boxes: 3780x80, 3780x4
