@@ -2,7 +2,7 @@ import argparse
 from sys import platform
 
 #from models import *  # set ONNX_EXPORT in models.py
-from Model import*
+#from Model import*
 from DataLoader import *
 from utils.utils import *
 from utils.torch_utils import *
@@ -19,7 +19,7 @@ def detect(save_img=False):
     os.makedirs(out)  # make new output folder
 
     # Initialize model
-    model = MidasNet_Yolo().to(device) #Darknet(opt.cfg, img_size)
+    model = MainModel().to(device) #Darknet(opt.cfg, img_size)
 
     # Load weights
     #attempt_download(weights)
