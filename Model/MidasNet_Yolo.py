@@ -553,7 +553,7 @@ class MidasNet_Yolo(BaseModel):
         yolo_out.append(yolo_layer3_out)
         yolo_out.append(yolo_layer2_out)
         
-        planar = build(config=self.config, layer_1, layer_2, layer_3, layer_4)
+        planar = build(self.config, layer_1, layer_2, layer_3, layer_4)
         
         if self.training:  # train
             return torch.squeeze(output, dim=1), yolo_out, planar
