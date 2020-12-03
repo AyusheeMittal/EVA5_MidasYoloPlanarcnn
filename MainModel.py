@@ -13,14 +13,13 @@ import torch.optim as optim
 import torch.utils.data
 from torch.autograd import Variable
 
-import config
 #import utils
 #from nms.nms_wrapper import nms
 #from roialign.roi_align.crop_and_resize import CropAndResizeFunction
 import cv2
 #from models.modules import *
 #from utils import *
-#from config import *
+from config import *
 
 ONNX_EXPORT = False
 
