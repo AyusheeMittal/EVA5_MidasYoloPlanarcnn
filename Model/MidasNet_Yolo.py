@@ -18,8 +18,8 @@ from torch.autograd import Variable
 #from roialign.roi_align.crop_and_resize import CropAndResizeFunction
 import cv2
 #from models.modules import *
-from utils import *
-from comfig import *
+#from utils import *
+#from config import *
 
 ONNX_EXPORT = False
 
@@ -452,7 +452,7 @@ class MidasNet_Yolo(BaseModel):
         if path:
             self.load(path)
        
-        self.config = Config() #config
+        self.config = config.Config() #config
         self.model_dir = 'test'
         self.set_log_dir()
         self.initialize_weights()
