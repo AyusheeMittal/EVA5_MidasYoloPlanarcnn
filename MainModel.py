@@ -13,6 +13,7 @@ import torch.optim as optim
 import torch.utils.data
 from torch.autograd import Variable
 
+import config
 #import utils
 #from nms.nms_wrapper import nms
 #from roialign.roi_align.crop_and_resize import CropAndResizeFunction
