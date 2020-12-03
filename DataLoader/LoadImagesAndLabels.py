@@ -466,12 +466,12 @@ def letterbox(img, new_shape=(416, 416), color=(114, 114, 114), auto=True, scale
 
     if shape[::-1] != new_unpad:  # resize
         img = cv2.resize(img, new_unpad, interpolation=cv2.INTER_LINEAR)
-        midas = cv2.resize(midas, new_unpad, interpolation=cv2.INTER_LINEAR)
+        #midas = cv2.resize(midas, new_unpad, interpolation=cv2.INTER_LINEAR)
     top, bottom = int(round(dh - 0.1)), int(round(dh + 0.1))
     left, right = int(round(dw - 0.1)), int(round(dw + 0.1))
     img = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=color)  # add border
-    midas = cv2.copyMakeBorder(midas, top, bottom, left, right, cv2.BORDER_CONSTANT, value=(0, 0, 0))  # add border
-    return img, ratio, (dw, dh), midas
+    #midas = cv2.copyMakeBorder(midas, top, bottom, left, right, cv2.BORDER_CONSTANT, value=(0, 0, 0))  # add border
+    return img, ratio, (dw, dh)#, midas
 
 
 def random_affine(img, midas, targets=(), degrees=10, translate=.1, scale=.1, shear=10, border=0):
