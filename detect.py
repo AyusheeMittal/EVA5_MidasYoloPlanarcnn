@@ -5,7 +5,7 @@ from sys import platform
 from Model import*
 from DataLoader import *
 from utils.utils import *
-
+from utils.torch_utils import *
 
 def detect(save_img=False):
     img_size = (320, 192) if ONNX_EXPORT else opt.img_size  # (320, 192) or (416, 256) or (608, 352) for (height, width)
