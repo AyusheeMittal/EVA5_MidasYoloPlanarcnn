@@ -523,3 +523,9 @@ def print_model_biases(model):
                                                    '%5.2f+/-%-5.2f' % (b[:, 5:].mean(), b[:, 5:].std())))
     except:
         pass
+
+def load_classes(path):
+    # Loads *.names file at 'path'
+    with open(path, 'r') as f:
+        names = f.read().split('\n')
+    return list(filter(None, names))  # filter removes empty strings (such as last line)
