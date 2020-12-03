@@ -3,7 +3,7 @@ import json
 
 from torch.utils.data import DataLoader
 
-from Model import *
+#from Model import *
 from DataLoader import *
 from utils.utils import *
 from utils.torch_utils import *
@@ -29,7 +29,7 @@ def test(data,
             os.remove(f)
 
         # Initialize model
-        model = MidasNet_Yolo(img_size)
+        model = MainModel(img_size)
 
         # Load weights
         attempt_download(weights)
