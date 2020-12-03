@@ -29,7 +29,7 @@ def detect(save_img=False):
     # Second-stage classifier
     classify = False
     if classify:
-        modelc = torch_utils.load_classifier(name='resnet101', n=2)  # initialize
+        modelc = load_classifier(name='resnet101', n=2)  # initialize
         modelc.load_state_dict(torch.load('weights/resnet101.pt', map_location=device)['model'])  # load weights
         modelc.to(device).eval()
 
@@ -83,9 +83,9 @@ def detect(save_img=False):
             img = img.unsqueeze(0)
 
         # Inference
-        t1 = torch_utils.time_synchronized()
+        t1 = time_synchronized()
         pred = model(img, augment=opt.augment)[0]
-        t2 = torch_utils.time_synchronized()
+        t2 = time_synchronized()
 
         # to float
         if half:
