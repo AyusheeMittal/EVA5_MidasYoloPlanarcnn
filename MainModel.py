@@ -452,13 +452,13 @@ class MainModel(BaseModel):
         if path:
             self.load(path)
        
-        self.config = Config() #config
-        self.model_dir = 'test'
-        self.set_log_dir()
-        self.build(self.config, self.pretrained.layer1, self.pretrained.layer2, self.pretrained.layer3, self.pretrained.layer4)
-        self.initialize_weights()
-        self.loss_history = []
-        self.val_loss_history = []
+        #self.config = Config() #config
+        #self.model_dir = 'test'
+        #self.set_log_dir()
+        #self.build(self.config, self.pretrained.layer1, self.pretrained.layer2, self.pretrained.layer3, self.pretrained.layer4)
+        #self.initialize_weights()
+        #self.loss_history = []
+        #self.val_loss_history = []
 
     def forward(self, x, augment=False, verbose=False):
         if not augment:
