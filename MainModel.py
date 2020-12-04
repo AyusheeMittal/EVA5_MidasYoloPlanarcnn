@@ -18,8 +18,8 @@ from torch.autograd import Variable
 #from roialign.roi_align.crop_and_resize import CropAndResizeFunction
 import cv2
 #from models.modules import *
-from .utils import *
-from .config import *
+from .utils_planar import *
+from .config_planar import *
 
 ONNX_EXPORT = False
 
