@@ -198,7 +198,7 @@ def test(data,
     maps = np.zeros(nc) + map
     for i, c in enumerate(ap_class):
         maps[c] = ap[i]
-    return (mp, mr, map, mf1, *(loss.cpu() / len(dataloader)).tolist()), maps
+    return (mp, mr, map, mf1, *(ssim_loss.cpu() / len(dataloader)).tolist()), maps
 
 
 if __name__ == '__main__':
