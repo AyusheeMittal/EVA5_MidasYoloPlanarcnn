@@ -310,7 +310,8 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
         # Convert
         img = img[:, :, ::-1].transpose(2, 0, 1)  # BGR to RGB, to 3x416x416
         img = np.ascontiguousarray(img)
-        
+        midas = cv2.cvtColor(midas, cv2.COLOR_BGR2GRAY)
+        print("trying bgr to gray to handle channels conflict in midas", midas.shape)
         return torch.from_numpy(img), labels_out, self.img_files[index], shapes, torch.from_numpy(midas.copy())
 
     @staticmethod
