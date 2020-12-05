@@ -344,6 +344,7 @@ def load_midas(self, index):
         midas_path = self.midas_files[index]
         #print(midas_path)
         midas = cv2.imread(midas_path)  # BGR
+        print("midas ground truth size", midas.size())
         assert midas is not None, 'Midas Image Not Found ' + midas_path
         h0, w0 = midas.shape[:2]  # orig hw
         r = self.midas_size / max(h0, w0)  # resize image to img_size
