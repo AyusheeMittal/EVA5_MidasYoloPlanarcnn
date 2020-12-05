@@ -243,15 +243,15 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
         else:
             # Load image
             img, (h0, w0), (h, w) = load_image(self, index)
-            
+        
             midas, (m_h0, m_w0), (m_h, m_w) = load_midas(self, index)
-
+            print("img shape before letterbox call-------- ", img.shape)
             # Letterbox
             shape = self.batch_shapes[self.batch[index]] if self.rect else self.img_size  # final letterboxed shape
             img, ratio, pad = letterbox(img, shape, auto=False, scaleup=self.augment) #, midas
             shapes = (h0, w0), ((h / h0, w / w0), pad)  # for COCO mAP rescaling
-            print("shapes-------- ", shapes)
-            print("(m_h0, m_w0)-------- ", (m_h0, m_w0))
+            print("img shape-------- ", img.shape)
+            print("ratio, pad-------- ", ratio, pad)
             # Load labels
             labels = []
             x = self.labels[index]
@@ -320,8 +320,6 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
         img, label, path, shapes, midas = zip(*batch)  # transposed
         for i, l in enumerate(label):
             l[:, 0] = i  # add target image index for build_targets()
-        print("length of midas-------", len(midas))
-        print("length of img-------", len(img))
         return torch.stack(img, 0), torch.cat(label, 0), path, shapes, torch.stack(midas, 0)
 
 
