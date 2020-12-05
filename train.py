@@ -384,6 +384,7 @@ def train():
             # Compute loss
             #loss, loss_items = compute_loss(pred[1], targets, model)
             ssim_obj = SSIM()
+            print('pred[0].size(), midas.size()', pred[0].size(), midas.size())
             ssim_loss = 1 - ssim_obj(pred[0], midas)
             loss_items = ssim_loss
             
