@@ -67,6 +67,7 @@ def train():
     epochs = opt.epochs  # 500200 batches at bs 64, 117263 images = 273 epochs
     batch_size = opt.batch_size
     accumulate = opt.accumulate  # effective bs = batch_size * accumulate = 16 * 4 = 64
+    weights = opt.weights  # initial training weights
     weights_yolo = opt.weights_yolo  # initial training weights
     weights_midas = opt.weights_midas  # initial training weights
     imgsz_min, imgsz_max, imgsz_test = opt.img_size  # img sizes (min, max, test)
@@ -125,11 +126,42 @@ def train():
     start_epoch = 0
     best_fitness = 0.0
     #attempt_download(weights)
-    if weights_yolo.endswith('.pt'):
-        # possible weights are '*.pt', 'yolov3-spp.pt', 'yolov3-tiny.pt' etc.
-        Yolo_state_dict = torch.load(weights_yolo, map_location=device)['model']
-        #mapping yolo layers
-        layers_mapping = {'yolo4_hack.0.weight' : 'module_list.88.Conv2d.weight',
+    if weights.endswith('.pt'):
+        chkpt = torch.load(weights, map_location=device)
+        try:
+          chkpt = {k: v for k, v in chkpt.items() if model.state_dict()[k].numel() == v.numel()}
+          model.load_state_dict(chkpt, strict=False)
+
+          # freezing the encoder weights
+          print("freezing the encoder weights while loading best weights")
+          for k, v in dict(model.pretrained.layer1.named_parameters()).items():
+              if ('.weight' in k):
+                  model.state_dict()['pretrained.layer1.' + k].requires_grad = False
+                    
+          for k, v in dict(model.pretrained.layer2.named_parameters()).items():
+              if ('.weight' in k):
+                  model.state_dict()['pretrained.layer2.' + k].requires_grad = False
+                    
+          for k, v in dict(model.pretrained.layer3.named_parameters()).items():
+              if ('.weight' in k):
+                  model.state_dict()['pretrained.layer3.' + k].requires_grad = False
+                    
+          for k, v in dict(model.pretrained.layer4.named_parameters()).items():
+              if ('.weight' in k):
+                  model.state_dict()['pretrained.layer4.' + k].requires_grad = False
+                    
+          
+          except KeyError as e:
+              s = "%s is not compatible with %s. Specify --weights '' or specify a --cfg compatible with %s. " \
+                  "See https://github.com/ultralytics/yolov3/issues/657" % (opt.weights, opt.cfg, opt.weights)
+              raise KeyError(s) from e
+    else:
+        #initial load
+        if weights_yolo.endswith('.pt'):
+            # possible weights are '*.pt', 'yolov3-spp.pt', 'yolov3-tiny.pt' etc.
+            Yolo_state_dict = torch.load(weights_yolo, map_location=device)['model']
+            #mapping yolo layers
+            layers_mapping = {'yolo4_hack.0.weight' : 'module_list.88.Conv2d.weight',
                             'yolo4_class' : 'module_list.89.Conv2d.weight',
                             'yolo3_2.0.weight' : 'module_list.90.Conv2d.weight',
                             'yolo3_1.1.weight' : 'module_list.91.Conv2d.weight',
@@ -156,73 +188,73 @@ def train():
                             'yolo2_hack.0.weight' : 'module_list.112.Conv2d.weight',
                             'yolo2_class' : 'module_list.113.Conv2d.weight'
                          }
-        yolo_weight_dict = { k: v for k, v in Yolo_state_dict.items() if k in layers_mapping.values()}
-         # load model
-        try:  #have to make changes
-            model_dict = model.state_dict()
-            yolo_dict = {}
-            for k, v in layers_mapping.items():
-                for k2,v2 in yolo_weight_dict.items():
-                    if( v == k2 and model_dict[k].numel() == v2.numel()):
-                        yolo_dict[k] = v2
-            model_dict.update(yolo_dict)
-            model.load_state_dict(model_dict, strict=False)
-        except KeyError as e:
-            s = "%s is not compatible with %s. Specify --weights '' or specify a --cfg compatible with %s. " \
-                "See https://github.com/ultralytics/yolov3/issues/657" % (opt.weights_yolo, opt.cfg, opt.weights_yolo)
-            raise KeyError(s) from e
-        del yolo_weight_dict    
+            yolo_weight_dict = { k: v for k, v in Yolo_state_dict.items() if k in layers_mapping.values()}
+            # load model
+            try:  #have to make changes
+                model_dict = model.state_dict()
+                yolo_dict = {}
+                for k, v in layers_mapping.items():
+                    for k2,v2 in yolo_weight_dict.items():
+                        if( v == k2 and model_dict[k].numel() == v2.numel()):
+                            yolo_dict[k] = v2
+                model_dict.update(yolo_dict)
+                model.load_state_dict(model_dict, strict=False)
+            except KeyError as e:
+                s = "%s is not compatible with %s. Specify --weights '' or specify a --cfg compatible with %s. " \
+                    "See https://github.com/ultralytics/yolov3/issues/657" % (opt.weights_yolo, opt.cfg, opt.weights_yolo)
+                raise KeyError(s) from e
+            del yolo_weight_dict    
             
-    if weights_midas.endswith('.pt'):  # pytorch format
-        # possible weights are '*.pt', 'yolov3-spp.pt', 'yolov3-tiny.pt' etc.
-        Midas_state_dict = torch.load(weights_midas, map_location=device)
+        if weights_midas.endswith('.pt'):  # pytorch format
+            # possible weights are '*.pt', 'yolov3-spp.pt', 'yolov3-tiny.pt' etc.
+            Midas_state_dict = torch.load(weights_midas, map_location=device)
 
-        # load model
-        try:  #have to make changes
-            model_dict = model.state_dict()
-            midas_weight_dict = { k: v for k, v in Midas_state_dict.items() if k in model_dict}
-            model_dict.update(midas_weight_dict)
-            model.load_state_dict(model_dict, strict=False)
-            #chkpt['model'] = {k: v for k, v in chkpt['model'].items() if model.state_dict()[k].numel() == v.numel()}
-            #model.load_state_dict(chkpt['model'], strict=False)
+            # load model
+            try:  #have to make changes
+                model_dict = model.state_dict()
+                midas_weight_dict = { k: v for k, v in Midas_state_dict.items() if k in model_dict}
+                model_dict.update(midas_weight_dict)
+                model.load_state_dict(model_dict, strict=False)
+                #chkpt['model'] = {k: v for k, v in chkpt['model'].items() if model.state_dict()[k].numel() == v.numel()}
+                #model.load_state_dict(chkpt['model'], strict=False)
             
             
-            # freezing the encoder weights
-            print("freezing the encoder weights")
-            for k, v in dict(model.pretrained.layer1.named_parameters()).items():
-                if ('.weight' in k):
-                    model.state_dict()['pretrained.layer1.' + k].requires_grad = False
+                # freezing the encoder weights
+                print("freezing the encoder weights")
+                for k, v in dict(model.pretrained.layer1.named_parameters()).items():
+                    if ('.weight' in k):
+                        model.state_dict()['pretrained.layer1.' + k].requires_grad = False
                     
-            for k, v in dict(model.pretrained.layer2.named_parameters()).items():
-                if ('.weight' in k):
-                    model.state_dict()['pretrained.layer2.' + k].requires_grad = False
+                for k, v in dict(model.pretrained.layer2.named_parameters()).items():
+                    if ('.weight' in k):
+                        model.state_dict()['pretrained.layer2.' + k].requires_grad = False
                     
-            for k, v in dict(model.pretrained.layer3.named_parameters()).items():
-                if ('.weight' in k):
-                    model.state_dict()['pretrained.layer3.' + k].requires_grad = False
+                for k, v in dict(model.pretrained.layer3.named_parameters()).items():
+                    if ('.weight' in k):
+                        model.state_dict()['pretrained.layer3.' + k].requires_grad = False
                     
-            for k, v in dict(model.pretrained.layer4.named_parameters()).items():
-                if ('.weight' in k):
-                    model.state_dict()['pretrained.layer4.' + k].requires_grad = False
+                for k, v in dict(model.pretrained.layer4.named_parameters()).items():
+                    if ('.weight' in k):
+                        model.state_dict()['pretrained.layer4.' + k].requires_grad = False
                     
-            print("done")
-        except KeyError as e:
-            s = "%s is not compatible with %s. Specify --weights '' or specify a --cfg compatible with %s. " \
-                "See https://github.com/ultralytics/yolov3/issues/657" % (opt.weights_midas, opt.cfg, opt.weights_midas)
-            raise KeyError(s) from e
+                print("done")
+            except KeyError as e:
+                s = "%s is not compatible with %s. Specify --weights '' or specify a --cfg compatible with %s. " \
+                    "See https://github.com/ultralytics/yolov3/issues/657" % (opt.weights_midas, opt.cfg, opt.weights_midas)
+                raise KeyError(s) from e
 
-        # load optimizer
-        #if chkpt['optimizer'] is not None:
-            #optimizer.load_state_dict(chkpt['optimizer'])
-            #best_fitness = chkpt['best_fitness']
+            # load optimizer
+            #if chkpt['optimizer'] is not None:
+                #optimizer.load_state_dict(chkpt['optimizer'])
+                #best_fitness = chkpt['best_fitness']
 
-        # load results
-        #if chkpt.get('training_results') is not None:
-            #with open(results_file, 'w') as file:
-                #file.write(chkpt['training_results'])  # write results.txt
+            # load results
+            #if chkpt.get('training_results') is not None:
+                #with open(results_file, 'w') as file:
+                    #file.write(chkpt['training_results'])  # write results.txt
 
-        start_epoch = 1
-        del Midas_state_dict #chkpt
+            start_epoch = 1
+            del Midas_state_dict #chkpt    
 
     #elif len(weights) > 0:  # darknet format
         # possible weights are '*.weights', 'yolov3-tiny.conv.15',  'darknet53.conv.74' etc.
@@ -484,6 +516,7 @@ if __name__ == '__main__':
     parser.add_argument('--evolve', action='store_true', help='evolve hyperparameters')
     parser.add_argument('--bucket', type=str, default='', help='gsutil bucket')
     parser.add_argument('--cache-images', action='store_true', help='cache images for faster training')
+    parser.add_argument('--weights', type=str, default='' , help='loading from best weights path')
     parser.add_argument('--weights_yolo', type=str, default='weights/yolov3-spp-ultralytics.pt' , help='initial yolo weights path') 
     parser.add_argument('--weights_midas', type=str, default='weights/model-f6b98070.pt' , help='initial midas weights path')
     parser.add_argument('--name', default='', help='renames results.txt to results_name.txt if supplied')
@@ -491,7 +524,7 @@ if __name__ == '__main__':
     parser.add_argument('--adam', action='store_true', help='use adam optimizer')
     parser.add_argument('--single-cls', action='store_true', help='train as single-class dataset')
     opt = parser.parse_args()
-    opt.weights_yolo = last if opt.resume else opt.weights_yolo
+    opt.weights = last if opt.resume else opt.weights
     print(opt)
     opt.img_size.extend([opt.img_size[-1]] * (3 - len(opt.img_size)))  # extend to 3 sizes (min, max, test)
     device = select_device(opt.device, apex=mixed_precision, batch_size=opt.batch_size)
