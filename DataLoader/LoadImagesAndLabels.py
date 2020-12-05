@@ -245,14 +245,11 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
             img, (h0, w0), (h, w) = load_image(self, index)
         
             midas, (m_h0, m_w0), (m_h, m_w) = load_midas(self, index)
-            print("img shape before letterbox call-------- ", img.shape)
-            print("midas shape before letterbox call-------- ", midas.shape)
             # Letterbox
             shape = self.batch_shapes[self.batch[index]] if self.rect else self.img_size  # final letterboxed shape
             img, ratio, pad, midas = letterbox(img, midas, shape, auto=False, scaleup=self.augment) 
             shapes = (h0, w0), ((h / h0, w / w0), pad)  # for COCO mAP rescaling
-            
-            print("midas shape-------- ", midas.shape)
+           
             # Load labels
             labels = []
             x = self.labels[index]
