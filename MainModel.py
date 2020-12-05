@@ -554,7 +554,7 @@ class MainModel(BaseModel):
         #planar = build(self.config, layer_1, layer_2, layer_3, layer_4)
         
         if self.training:  # train
-            return torch.squeeze(output, dim=1), yolo_out#, planar
+            return output, yolo_out#, planar torch.squeeze(output, dim=1)
         elif ONNX_EXPORT:  # export
             x = [torch.cat(x, 0) for x in zip(*yolo_out)]
             return x[0], torch.cat(x[1:3], 1)  # scores, boxes: 3780x80, 3780x4
@@ -567,7 +567,7 @@ class MainModel(BaseModel):
                 x[1][..., 0] = img_size[1] - x[1][..., 0]  # flip lr
                 x[2][..., :4] /= s[1]  # scale
                 x = torch.cat(x, 1)
-            return x, p
+            return x, p, output
         
 
         #return torch.squeeze(output, dim=1), [yolo_layer4_out, yolo_layer3_out, yolo_layer2_out]
