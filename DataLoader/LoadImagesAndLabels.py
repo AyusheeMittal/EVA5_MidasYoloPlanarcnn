@@ -342,7 +342,7 @@ def load_midas(self, index):
     midas = self.midas[index]
     if midas is None:  # not cached
         midas_path = self.midas_files[index]
-        #print(midas_path)
+        print(midas_path)
         midas = cv2.imread(midas_path)  # BGR
         print("midas ground truth size", midas.shape)
         assert midas is not None, 'Midas Image Not Found ' + midas_path
@@ -466,7 +466,7 @@ def letterbox(img, midas, new_shape=(416, 416), color=(114, 114, 114), auto=True
 
     if shape[::-1] != new_unpad:  # resize
         img = cv2.resize(img, new_unpad, interpolation=cv2.INTER_LINEAR)
-        #midas = cv2.resize(midas, new_unpad, interpolation=cv2.INTER_LINEAR)
+        midas = cv2.resize(midas, new_unpad, interpolation=cv2.INTER_LINEAR)
     top, bottom = int(round(dh - 0.1)), int(round(dh + 0.1))
     left, right = int(round(dw - 0.1)), int(round(dw + 0.1))
     img = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=color)  # add border
