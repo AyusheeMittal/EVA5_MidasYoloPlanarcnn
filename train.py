@@ -11,7 +11,7 @@ from DataLoader import *
 from utils.torch_utils import * #select_device, init_seeds, ModelEMA
 from utils.utils import * #labels_to_class_weights, labels_to_image_weights, compute_loss, plot_results
 import math
-
+import MainModel
 import test
 
 mixed_precision = True
@@ -425,11 +425,11 @@ def train():
         if save:
             with open(results_file, 'r') as f:
                 # Create checkpoint
-                chkpt = {'epoch': epoch,
-                         'best_fitness': best_fitness,
-                         'training_results': f.read(),
-                         'model': ema.ema.module.state_dict() if hasattr(model, 'module') else ema.ema.state_dict(),
-                         'optimizer': None if final_epoch else optimizer.state_dict()}
+                chkpt = ema.ema.state_dict() #{'epoch': epoch,
+                         #'best_fitness': best_fitness,
+                         #'training_results': f.read(),
+                         #'model': ema.ema.module.state_dict() if hasattr(model, 'module') else ema.ema.state_dict(),
+                         #'optimizer': None if final_epoch else optimizer.state_dict()}
 
             # Save last checkpoint
             torch.save(chkpt, last)
