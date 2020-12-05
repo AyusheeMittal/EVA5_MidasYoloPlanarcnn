@@ -171,7 +171,7 @@ def train():
             s = "%s is not compatible with %s. Specify --weights '' or specify a --cfg compatible with %s. " \
                 "See https://github.com/ultralytics/yolov3/issues/657" % (opt.weights_yolo, opt.cfg, opt.weights_yolo)
             raise KeyError(s) from e
-            
+        del yolo_weight_dict    
             
     if weights_midas.endswith('.pt'):  # pytorch format
         # possible weights are '*.pt', 'yolov3-spp.pt', 'yolov3-tiny.pt' etc.
@@ -322,7 +322,7 @@ def train():
             ni = i + nb * epoch  # number integrated batches (since train start)
             imgs = imgs.to(device).float() / 255.0  # uint8 to float32, 0 - 255 to 0.0 - 1.0
             targets = targets.to(device)
-            midas = midas.to(device)
+            midas = midas.to(device).float() / 255.0 
 
             # Burn-in
             if ni <= n_burn * 2:
