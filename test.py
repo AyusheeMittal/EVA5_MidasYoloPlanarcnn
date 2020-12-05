@@ -91,13 +91,13 @@ def test(data,
         with torch.no_grad():
             # Run model
             t = time_synchronized()
-            inf_out, train_out = model(imgs, augment=augment)  # inference and training outputs
+            inf_out, train_out, midas_out = model(imgs, augment=augment)  # inference and training outputs
             t0 += time_synchronized() - t
 
             # Compute loss
             if hasattr(model, 'hyp'):  # if model has loss hyperparameters
                 #loss += compute_loss(train_out, targets, model)[1][:3]  # GIoU, obj, cls
-                ssim_loss = 1 - ssim(train_out, midas)
+                ssim_loss = 1 - ssim(midas_out, midas)
 
             # Run NMS
             t = time_synchronized()
