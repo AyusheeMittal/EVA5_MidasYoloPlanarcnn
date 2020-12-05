@@ -251,6 +251,7 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
             img, ratio, pad = letterbox(img, shape, auto=False, scaleup=self.augment) #, midas
             shapes = (h0, w0), ((h / h0, w / w0), pad)  # for COCO mAP rescaling
             print("shapes-------- ", shapes)
+            print("(m_h0, m_w0)-------- ", (m_h0, m_w0))
             # Load labels
             labels = []
             x = self.labels[index]
@@ -311,7 +312,7 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
         # Convert
         img = img[:, :, ::-1].transpose(2, 0, 1)  # BGR to RGB, to 3x416x416
         img = np.ascontiguousarray(img)
-
+        
         return torch.from_numpy(img), labels_out, self.img_files[index], shapes, torch.from_numpy(midas.copy())
 
     @staticmethod
@@ -319,6 +320,7 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
         img, label, path, shapes, midas = zip(*batch)  # transposed
         for i, l in enumerate(label):
             l[:, 0] = i  # add target image index for build_targets()
+        print(midas.shape)
         return torch.stack(img, 0), torch.cat(label, 0), path, shapes, torch.stack(midas, 0)
 
 
