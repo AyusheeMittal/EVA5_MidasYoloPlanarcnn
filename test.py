@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader
 from DataLoader import *
 from utils.utils import *
 from utils.torch_utils import *
-
+from utils.ssim import *
 def test(data,
          weights=None,
          batch_size=16,
@@ -97,8 +97,7 @@ def test(data,
             # Compute loss
             if hasattr(model, 'hyp'):  # if model has loss hyperparameters
                 #loss += compute_loss(train_out, targets, model)[1][:3]  # GIoU, obj, cls
-                ssim_obj = SSIM()
-                ssim_loss = 1 - ssim_obj(train_out, midas)
+                ssim_loss = 1 - ssim(train_out, midas)
 
             # Run NMS
             t = time_synchronized()
