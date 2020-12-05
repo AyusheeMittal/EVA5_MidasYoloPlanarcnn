@@ -246,12 +246,13 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
         
             midas, (m_h0, m_w0), (m_h, m_w) = load_midas(self, index)
             print("img shape before letterbox call-------- ", img.shape)
+            print("midas shape before letterbox call-------- ", midas.shape)
             # Letterbox
             shape = self.batch_shapes[self.batch[index]] if self.rect else self.img_size  # final letterboxed shape
-            img, ratio, pad = letterbox(img, shape, auto=False, scaleup=self.augment) #, midas
+            img, ratio, pad, midas = letterbox(img, midas, shape, auto=False, scaleup=self.augment) 
             shapes = (h0, w0), ((h / h0, w / w0), pad)  # for COCO mAP rescaling
-            print("img shape-------- ", img.shape)
-            print("ratio, pad-------- ", ratio, pad)
+            
+            print("midas shape-------- ", midas.shape)
             # Load labels
             labels = []
             x = self.labels[index]
@@ -440,7 +441,7 @@ def load_mosaic(self, index):
     return img4, labels4, midas4
 
 
-def letterbox(img, new_shape=(416, 416), color=(114, 114, 114), auto=True, scaleFill=False, scaleup=True):    #midas,
+def letterbox(img, midas, new_shape=(416, 416), color=(114, 114, 114), auto=True, scaleFill=False, scaleup=True):    
     # Resize image to a 32-pixel-multiple rectangle https://github.com/ultralytics/yolov3/issues/232
     shape = img.shape[:2]  # current shape [height, width]
     if isinstance(new_shape, int):
@@ -471,7 +472,7 @@ def letterbox(img, new_shape=(416, 416), color=(114, 114, 114), auto=True, scale
     top, bottom = int(round(dh - 0.1)), int(round(dh + 0.1))
     left, right = int(round(dw - 0.1)), int(round(dw + 0.1))
     img = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=color)  # add border
-    #midas = cv2.copyMakeBorder(midas, top, bottom, left, right, cv2.BORDER_CONSTANT, value=(0, 0, 0))  # add border
+    midas = cv2.copyMakeBorder(midas, top, bottom, left, right, cv2.BORDER_CONSTANT, value=(0, 0, 0))  # add border
     return img, ratio, (dw, dh)#, midas
 
 
