@@ -311,7 +311,7 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
         img = img[:, :, ::-1].transpose(2, 0, 1)  # BGR to RGB, to 3x416x416
         img = np.ascontiguousarray(img)
         midas = cv2.cvtColor(midas, cv2.COLOR_BGR2GRAY)
-        print("trying bgr to gray to handle channels conflict in midas", midas.shape)
+        #print("trying bgr to gray to handle channels conflict in midas", midas.shape)
         return torch.from_numpy(img), labels_out, self.img_files[index], shapes, torch.from_numpy(midas.copy())
 
     @staticmethod
@@ -343,9 +343,9 @@ def load_midas(self, index):
     midas = self.midas[index]
     if midas is None:  # not cached
         midas_path = self.midas_files[index]
-        print(midas_path)
+        #print(midas_path)
         midas = cv2.imread(midas_path)  # BGR
-        print("midas ground truth size", midas.shape)
+        #print("midas ground truth size", midas.shape)
         assert midas is not None, 'Midas Image Not Found ' + midas_path
         h0, w0 = midas.shape[:2]  # orig hw
         r = self.midas_size / max(h0, w0)  # resize image to img_size
