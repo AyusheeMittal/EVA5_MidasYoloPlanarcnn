@@ -320,7 +320,7 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
         img, label, path, shapes, midas = zip(*batch)  # transposed
         for i, l in enumerate(label):
             l[:, 0] = i  # add target image index for build_targets()
-        print(midas.shape)
+        print(len(midas))
         return torch.stack(img, 0), torch.cat(label, 0), path, shapes, torch.stack(midas, 0)
 
 
