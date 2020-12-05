@@ -96,7 +96,7 @@ def train():
         os.remove(f)
 
     # Initialize model
-    model = MainModel().to(device)
+    model = MainModel.MainModel().to(device)
     #print(model)
 
     # Optimizer
