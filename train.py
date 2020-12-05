@@ -135,7 +135,7 @@ def train():
             model.load_state_dict(chkpt, strict=False)
 
             # freezing the encoder weights
-            print("freezing the encoder weights while loading best weights")
+            #print("freezing the encoder weights while loading best weights")
             for k, v in dict(model.pretrained.layer1.named_parameters()).items():
                 if ('.weight' in k):
                     model.state_dict()['pretrained.layer1.' + k].requires_grad = False
@@ -221,7 +221,7 @@ def train():
             
             
                 # freezing the encoder weights
-                print("freezing the encoder weights")
+                #print("freezing the encoder weights")
                 for k, v in dict(model.pretrained.layer1.named_parameters()).items():
                     if ('.weight' in k):
                         model.state_dict()['pretrained.layer1.' + k].requires_grad = False
@@ -238,7 +238,7 @@ def train():
                     if ('.weight' in k):
                         model.state_dict()['pretrained.layer4.' + k].requires_grad = False
                     
-                print("done")
+                #print("done")
             except KeyError as e:
                 s = "%s is not compatible with %s. Specify --weights '' or specify a --cfg compatible with %s. " \
                     "See https://github.com/ultralytics/yolov3/issues/657" % (opt.weights_midas, opt.cfg, opt.weights_midas)
@@ -348,7 +348,7 @@ def train():
             image_weights = labels_to_image_weights(dataset.labels, nc=nc, class_weights=w)
             dataset.indices = random.choices(range(dataset.n), weights=image_weights, k=dataset.n)  # rand weighted idx
 
-        mloss = torch.zeros(4).to(device)  # mean losses
+        mloss = torch.zeros(1).to(device)  # mean losses
         print(('\n' + '%10s' * 8) % ('Epoch', 'gpu_mem', 'GIoU', 'obj', 'cls', 'total', 'targets', 'img_size'))
         pbar = tqdm(enumerate(dataloader), total=nb)  # progress bar
         for i, (imgs, targets, paths, _, midas) in pbar:  # batch -------------------------------------------------------------
@@ -380,25 +380,28 @@ def train():
 
             # Run model
             pred = model(imgs)
-            print(len(pred[1]))
+            #print(len(pred[1]))
             # Compute loss
-            loss, loss_items = compute_loss(pred[1], targets, model)
-            #ssim_obj = SSIM(model)
-            #ssim_loss = - ssim_obj(pred[0], midas)
+            #loss, loss_items = compute_loss(pred[1], targets, model)
+            ssim_obj = SSIM()
+            ssim_loss = 1 - ssim_obj(pred[0], midas)
+            loss_items = ssim_loss
             
-            if not torch.isfinite(loss):
+            if not torch.isfinite(ssim_loss):#loss):
                 print('WARNING: non-finite loss, ending training ', loss_items)
                 return results
 
             # Scale loss by nominal batch_size of 64
             loss *= batch_size / 64
+            ssim_loss *= batch_size / 64
 
             # Compute gradient
             if mixed_precision:
                 with amp.scale_loss(loss, optimizer) as scaled_loss:
                     scaled_loss.backward()
             else:
-                loss.backward()
+                #loss.backward()
+                ssim_loss.backward()
 
             # Optimize accumulated gradient
             if ni % accumulate == 0:
