@@ -56,6 +56,8 @@ def test(data, lambda_y, lambda_m,
     iouv = torch.linspace(0.5, 0.95, 10).to(device)  # iou vector for mAP@0.5:0.95
     iouv = iouv[0].view(1)  # comment for mAP@0.5:0.95
     niou = iouv.numel()
+    yolo_loss = 0
+    ssim_loss = 0
 
     # Dataloader
     if dataloader is None:
