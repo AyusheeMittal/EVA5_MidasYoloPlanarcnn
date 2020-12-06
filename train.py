@@ -409,8 +409,8 @@ def train():
 
             # Run model
             pred = model(imgs)
-            print('pred', pred[0])
-            print('midas',midas)
+            #print('pred', pred[0])
+            #print('midas',midas)
             #print(len(pred[1]))
             # Compute loss
             yolo_loss, loss_items = compute_loss(pred[1], targets, model)
