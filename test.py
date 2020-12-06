@@ -81,7 +81,7 @@ def test(data,
         targets = targets.to(device)
         nb, _, height, width = imgs.shape  # batch size, channels, height, width
         whwh = torch.Tensor([width, height, width, height]).to(device)
-        midas = midas.to(device)
+        midas = midas.to(device).float() / 255.0
         # Plot images with bounding boxes
         f = 'test_batch%g.png' % batch_i  # filename
         if batch_i < 1 and not os.path.exists(f):
