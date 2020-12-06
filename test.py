@@ -8,7 +8,7 @@ from DataLoader import *
 from utils.utils import *
 from utils.torch_utils import *
 from utils.ssim import *
-def test(data,
+def test(data, lambda_y, lambda_m,
          weights=None,
          batch_size=16,
          img_size=416,
@@ -73,7 +73,7 @@ def test(data,
     coco91class = coco80_to_coco91_class()
     s = ('%20s' + '%10s' * 6) % ('Class', 'Images', 'Targets', 'P', 'R', 'mAP@0.5', 'F1')
     p, r, f1, mp, mr, map, mf1, t0, t1 = 0., 0., 0., 0., 0., 0., 0., 0., 0.
-    loss = torch.zeros(3, device=device)
+    yolo_loss = torch.zeros(3, device=device)
     ssim_loss = torch.zeros(1, device=device)
     jdict, stats, ap, ap_class = [], [], [], []
     for batch_i, (imgs, targets, paths, shapes, midas) in enumerate(tqdm(dataloader, desc=s)):
@@ -96,9 +96,10 @@ def test(data,
 
             # Compute loss
             if hasattr(model, 'hyp'):  # if model has loss hyperparameters
-                loss += compute_loss(train_out, targets, model)[1][:3]  # GIoU, obj, cls
+                yolo_loss += compute_loss(train_out, targets, model)[1][:3]  # GIoU, obj, cls
                 midas = midas.unsqueeze(1)
                 ssim_loss += 1 - ssim(midas_out, midas)
+                loss = lambda_y * yolo_loss + lambda_m * ssim_loss
 
             # Run NMS
             t = time_synchronized()
