@@ -72,7 +72,11 @@ def train():
     weights_yolo = opt.weights_yolo  # initial training weights
     weights_midas = opt.weights_midas  # initial training weights
     imgsz_min, imgsz_max, imgsz_test = opt.img_size  # img sizes (min, max, test)
-
+    branch = opt.branch
+    lambda_y = 1
+    lambda_m = 1
+    #lambda_p = 1
+        
     # Image Sizes
     gs = 64  # (pixels) grid size
     assert math.fmod(imgsz_min, gs) == 0, '--img-size %g must be a %g-multiple' % (imgsz_min, gs)
@@ -151,6 +155,18 @@ def train():
             for k, v in dict(model.pretrained.layer4.named_parameters()).items():
                 if ('.weight' in k):
                     model.state_dict()['pretrained.layer4.' + k].requires_grad = False
+                    
+            if(branch in 'yolo'): #freeze midas
+                lambda_m = 0
+                for k, v in dict(model.scratch.named_parameters()).items():
+                    if ('.weight' in k):
+                        model.state_dict()['scratch.' + k].requires_grad = False
+                        
+            elif(branch in 'midas'): #freeze yolo
+                lambda_y = 0
+                for k, v in dict(model.named_parameters()).items():
+                    if ('.weight' in k and 'yolo' in k):
+                        model.state_dict()[k].requires_grad = False
                      
         except KeyError as e:
             s = "%s is not compatible with %s. Specify --weights '' or specify a --cfg compatible with %s. " \
@@ -237,6 +253,18 @@ def train():
                 for k, v in dict(model.pretrained.layer4.named_parameters()).items():
                     if ('.weight' in k):
                         model.state_dict()['pretrained.layer4.' + k].requires_grad = False
+                        
+                if(branch in 'yolo'): #freeze midas
+                    lambda_m = 0
+                    for k, v in dict(model.scratch.named_parameters()).items():
+                        if ('.weight' in k):
+                            model.state_dict()['scratch.' + k].requires_grad = False
+                        
+                elif(branch in 'midas'): #freeze yolo
+                    lambda_y = 0
+                    for k, v in dict(model.named_parameters()).items():
+                        if ('.weight' in k and 'yolo' in k):
+                            model.state_dict()[k].requires_grad = False
                     
                 #print("done")
             except KeyError as e:
@@ -349,7 +377,7 @@ def train():
             dataset.indices = random.choices(range(dataset.n), weights=image_weights, k=dataset.n)  # rand weighted idx
 
         mloss = torch.zeros(4).to(device)  # mean losses
-        ssim_mloss = torch.zeros(1).to(device)  # mean losses
+        #ssim_mloss = torch.zeros(1).to(device)  # mean losses
         print(('\n' + '%10s' * 8) % ('Epoch', 'gpu_mem', 'GIoU', 'obj', 'cls', 'total', 'targets', 'img_size'))
         pbar = tqdm(enumerate(dataloader), total=nb)  # progress bar
         for i, (imgs, targets, paths, _, midas) in pbar:  # batch -------------------------------------------------------------
@@ -383,19 +411,20 @@ def train():
             pred = model(imgs)
             #print(len(pred[1]))
             # Compute loss
-            loss, loss_items = compute_loss(pred[1], targets, model)
+            yolo_loss, loss_items = compute_loss(pred[1], targets, model)
             ssim_obj = SSIM()
             midas = midas.unsqueeze(1)
             ssim_loss = 1 - ssim_obj(pred[0], midas)
-            ssim_loss_items = ssim_loss
+            #ssim_loss_items = ssim_loss
             
-            if not torch.isfinite(ssim_loss):#loss):
+            loss = lambda_y * yolo_loss + lambda_m * ssim_loss
+            
+            if not torch.isfinite(loss):
                 print('WARNING: non-finite loss, ending training ', loss_items)
                 return results
 
             # Scale loss by nominal batch_size of 64
             loss *= batch_size / 64
-            ssim_loss *= batch_size / 64
 
             # Compute gradient
             if mixed_precision:
@@ -403,7 +432,6 @@ def train():
                     scaled_loss.backward()
             else:
                 loss.backward()
-                ssim_loss.backward()
 
             # Optimize accumulated gradient
             if ni % accumulate == 0:
@@ -414,7 +442,7 @@ def train():
             # Print batch results
             mloss = (mloss * i + loss_items) / (i + 1)  # update mean losses
             mem = '%.3gG' % (torch.cuda.memory_cached() / 1E9 if torch.cuda.is_available() else 0)  # (GB)
-            s = ('%10s' * 2 + '%10.3g' * 6) % ('%g/%g' % (epoch, epochs - 1), mem, *mloss, len(targets), img_size)
+            s = ('%10s' * 2 + '%10.3g' * 7) % ('%g/%g' % (epoch, epochs - 1), mem, *mloss, len(targets), img_size, ssim_loss)
             pbar.set_description(s)
 
             # Plot images with bounding boxes
@@ -532,6 +560,7 @@ if __name__ == '__main__':
     parser.add_argument('--device', default='', help='device id (i.e. 0 or 0,1 or cpu)')
     parser.add_argument('--adam', action='store_true', help='use adam optimizer')
     parser.add_argument('--single-cls', action='store_true', help='train as single-class dataset')
+    parser.add_argument('--branch', default='', help='which branch to train ie yolo or midas or planar')
     opt = parser.parse_args()
     opt.weights = last if opt.resume else opt.weights
     print(opt)
