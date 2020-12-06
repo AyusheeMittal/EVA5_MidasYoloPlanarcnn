@@ -409,13 +409,15 @@ def train():
 
             # Run model
             pred = model(imgs)
+            print('pred', pred[0])
+            print('midas',midas)
             #print(len(pred[1]))
             # Compute loss
             yolo_loss, loss_items = compute_loss(pred[1], targets, model)
             ssim_obj = SSIM()
             midas = midas.unsqueeze(1)
             ssim_loss = 1 - ssim_obj(pred[0], midas)
-            print('ssim_loss', ssim_loss)
+            print('ssim_loss', ssim_loss.data)
             #ssim_loss_items = ssim_loss
             
             loss = lambda_y * yolo_loss + lambda_m * ssim_loss
@@ -464,7 +466,7 @@ def train():
         final_epoch = epoch + 1 == epochs
         if not opt.notest or final_epoch:  # Calculate mAP
             is_coco = any([x in data for x in ['coco.data', 'coco2014.data', 'coco2017.data']]) and model.nc == 80
-            results, maps = test.test(data,
+            results, maps = test.test(data, lambda_y, lambda_m,
                                       batch_size=batch_size,
                                       img_size=imgsz_test,
                                       model=ema.ema,
