@@ -348,7 +348,8 @@ def train():
             image_weights = labels_to_image_weights(dataset.labels, nc=nc, class_weights=w)
             dataset.indices = random.choices(range(dataset.n), weights=image_weights, k=dataset.n)  # rand weighted idx
 
-        mloss = torch.zeros(1).to(device)  # mean losses
+        mloss = torch.zeros(4).to(device)  # mean losses
+        ssim_mloss = torch.zeros(1).to(device)  # mean losses
         print(('\n' + '%10s' * 8) % ('Epoch', 'gpu_mem', 'GIoU', 'obj', 'cls', 'total', 'targets', 'img_size'))
         pbar = tqdm(enumerate(dataloader), total=nb)  # progress bar
         for i, (imgs, targets, paths, _, midas) in pbar:  # batch -------------------------------------------------------------
@@ -382,21 +383,18 @@ def train():
             pred = model(imgs)
             #print(len(pred[1]))
             # Compute loss
-            #loss, loss_items = compute_loss(pred[1], targets, model)
+            loss, loss_items = compute_loss(pred[1], targets, model)
             ssim_obj = SSIM()
-            #print('pred[0].size(), midas.size()', pred[0].size(), midas.size())
-            #pred[0] = pred[0].unsqueeze(1)
             midas = midas.unsqueeze(1)
-            #print('pred[0].size(), midas.size() after unsqueezing ', pred[0].size(), midas.size())
             ssim_loss = 1 - ssim_obj(pred[0], midas)
-            loss_items = ssim_loss
+            ssim_loss_items = ssim_loss
             
             if not torch.isfinite(ssim_loss):#loss):
                 print('WARNING: non-finite loss, ending training ', loss_items)
                 return results
 
             # Scale loss by nominal batch_size of 64
-            #loss *= batch_size / 64
+            loss *= batch_size / 64
             ssim_loss *= batch_size / 64
 
             # Compute gradient
@@ -404,7 +402,7 @@ def train():
                 with amp.scale_loss(loss, optimizer) as scaled_loss:
                     scaled_loss.backward()
             else:
-                #loss.backward()
+                loss.backward()
                 ssim_loss.backward()
 
             # Optimize accumulated gradient
@@ -416,8 +414,8 @@ def train():
             # Print batch results
             mloss = (mloss * i + loss_items) / (i + 1)  # update mean losses
             mem = '%.3gG' % (torch.cuda.memory_cached() / 1E9 if torch.cuda.is_available() else 0)  # (GB)
-            #s = ('%10s' * 2 + '%10.3g' * 6) % ('%g/%g' % (epoch, epochs - 1), mem, *mloss, len(targets), img_size)
-            #pbar.set_description(s)
+            s = ('%10s' * 2 + '%10.3g' * 6) % ('%g/%g' % (epoch, epochs - 1), mem, *mloss, len(targets), img_size)
+            pbar.set_description(s)
 
             # Plot images with bounding boxes
             if ni < 1:
