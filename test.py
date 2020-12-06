@@ -98,7 +98,7 @@ def test(data,
             if hasattr(model, 'hyp'):  # if model has loss hyperparameters
                 #loss += compute_loss(train_out, targets, model)[1][:3]  # GIoU, obj, cls
                 midas = midas.unsqueeze(1)
-                ssim_loss = 1 - ssim(midas_out, midas)
+                ssim_loss += 1 - ssim(midas_out, midas)
 
             # Run NMS
             t = time_synchronized()
