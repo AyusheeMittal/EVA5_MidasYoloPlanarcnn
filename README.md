@@ -28,17 +28,24 @@ For this Assignment model, We take the Encoder-Decoder type of architecture as t
 3. Height (bh)
 4. Value c corresponding to the class of an object ie the "Objectness"
 
-In the end, we use the **"Non-Maximum Suppression"** Algorithm to produce the final decision. It helps eliminate the unnecessary anchor boxes which are very close by performing the IOU(Intersection over Union) with the one having the highest class probability among them.
-The outputs produced are of size 52x52, 26x26, and 13x13 thus the detections are made at strides of 32, 16, 8 keeping in mind the images of very low resolution, medium resolution, and high resolution respectively.
+  In the end, we use the **"Non-Maximum Suppression"** Algorithm to produce the final decision. It helps eliminate the unnecessary anchor boxes which are 
+  very close by performing the IOU(Intersection over Union) with the one having the highest class probability among them.
+  The outputs produced are of size 52x52, 26x26, and 13x13 thus the detections are made at strides of 32, 16, 8 keeping in mind the images of very low 
+  resolution, medium resolution, and high resolution respectively.
 
 * Also, we were able to integrate the **_Planar RCNN Model_** for predicting the mask and generating 3-D planes. The model was taken from the NVlabs Repo. This network detects the planer regions given a single RGB image and predicts 3D plane parameters together with a segmentation mask for each planar region. 
 A **_Refinet model_** to further refine/optimize the masks of these detected planars is also added.  However, the model has been commented in this assignment code for we couldn't integrate the version with the latest one. The train functionality is also provided which we couldn't bring to the execution stage and henceforth commented too. 
 
 ## Training 
-We start training by loading the Yolo Ultralytics weights for the Yolo decoder layers and Midas weights for the Midas decoder layers. The dataloader loads the input images and targets which are Yolo class labels and Midas greyscale ground truth. It modifies our input by resizing and applying padding to the image and accordingly shifting the center of the bounding box in the Yolo labels and resizes and pads Midas ground truth too.
+We start training by loading the Yolo Ultralytics weights for the Yolo decoder layers and Midas weights for the Midas decoder layers. The _dataloader _ loads the input images and targets which are Yolo class labels and Midas greyscale ground truth. It modifies our input by resizing and applying padding to the image and accordingly shifting the center of the bounding box in the Yolo labels and resizes and pads Midas ground truth too. 
+Our Model had a total of **185,916,754 Trainable Parameter**s with an estimated Total size of **4639.60MB**
 
 ### Yolo
-We train the Yolo branch by freezing the Resnet101 encoder layers and the Midas layers. We run the Yolo model with image size 64x64 for 50 epochs. We get the map value as 0.2 after training 64x64. Then we run the Yolo model with image size 128x128 for another 50 epochs passing the best weights. We get the map value as 0.408. Furthermore, we then run for another 50 epochs with image size 256x256 and get the map value as 0.525. The map value doesn't increase on training further with higher image size yet we prefer training on the image size of 416x416 for another 50 epochs for better learning of network. However, we could see the consistent Gradual growth of map during the entire training of Yolo. 
+* We train the Yolo branch by freezing the Resnet101 encoder layers and the Midas layers. 
+* We run the Yolo model with image size 64x64 for 50 epochs. We get the map value as 0.2 after training 64x64. 
+* Then we run the Yolo model with image size 128x128 for another 50 epochs passing the best weights. We get the map value as 0.408. 
+* Furthermore, we then run for another 50 epochs with image size 256x256 and get the map value as 0.525. 
+* The map value doesn't increase on training further with higher image size yet we prefer training on the image size of 416x416 for another 50 epochs for better learning of network. However, we could see the consistent Gradual growth of map during the entire training of Yolo. 
 
 ### Midas
 We then start training the Midas branch by freezing the Yolo layers and the encoder layers. we train till SSIM value is close to 1 (ie 1 - loss is as low as possible) by taking the previous best weights. Note- Because of the transformations used (Yolo's), this value was always very low. 
@@ -50,7 +57,16 @@ Not Done- Freeze the encoder, Yolo decoder, and Midas decoder. Enable only plana
 
 
 ## Loss Functions
+### 1. torch.nn.BCEWithLogitsLoss
+This loss is used for Yolo Object detection. This loss combines a Sigmoid layer and the BCELoss in one single class. This version is more numerically stable than using a plain Sigmoid followed by a BCELoss as, by combining the operations into one layer, we take advantage of the log-sum-exp trick for numerical stability. The Yolo function uses the Sigmoid function instead of the Softmax function.
 
+### 2. SSIM
+We use SSIM to find the similarity between the pixels of Midas ground truth and the images of inverse depth maps generated by our model. It is a method for predicting the perceived quality of digital television and cinematic pictures, as well as other kinds of digital images and videos. SSIM is used for measuring the similarity between two images. The SSIM index is a full reference metric; in other words, the measurement or prediction of image quality is based on an initial uncompressed or distortion-free image as a reference.
+SSIM is a perception-based model that considers image degradation as a perceived change in structural information, while also incorporating important perceptual phenomena, including both luminance masking and contrast masking terms. The loss is given by:
+      _Loss = 1 - SSIM Index_
+
+The overall loss of the model was specified as :
+      **loss = lambda_y * yolo_loss + lambda_m * ssim_loss**
 
 ## Dataset
 This dataset consists of around 3500 images containing four main classes:
@@ -90,3 +106,10 @@ This dataset needs to be cleaned up further.
 * There are a few (<0.5%) png files among the raw images, which need to be removed (These do not have labels ie bounding boxes, nor do they have planar images).
 * There are a few (<0.5%) label files that are of invalid syntax (the x,y coordinates, or the width/height are > 1). These need to be discarded.
 * Final cleaned up dataset should only include data where all these three files are present for a raw image: labels text file, depth image, and planar image.
+
+## ToDo 
+We will try to integrate the training of Planar RCNN as there came so many problems from integrating different versions of Pytorch and Cuda to incorporating the model training functions. It was a great learning experience.
+
+## Team Members:
+1. Ayushee Mittal
+2. Smita Sasidran
