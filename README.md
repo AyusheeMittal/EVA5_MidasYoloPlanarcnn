@@ -10,8 +10,10 @@ The task is to create a network that can perform 3 tasks simultaneously:
 2. Predict the depth map of the image
 3. Predict the Planar Surfaces in the region
 
-For this Assignment model, we take the Resnet101 Pretrained architecture as a common Encoder for both Yolo and Midas and add two separate branches for Yolo Decoder and Midas Decoder. We have made use of "**Transfer learning**" to load the weights for the Midas layer as well as that of Yolo. The model looks like this - 
+For this Assignment model, We take the Encoder-Decoder type of architecture as the output we aim to get is "Dense". So we take the Resnet101 Pretrained architecture as a common Encoder for both Yolo and Midas and add two separate branches for Yolo Decoder and Midas Decoder. We have made use of "**Transfer learning**" to finetune our model with respect to our inputs by loading the weights for the Midas layer as well as that of Yolo. The model structure looks like this - https://github.com/AyusheeMittal/EVA5_MidasYoloPlanarcnn/blob/main/model.png
+The Yolo layers have been taken from the Yolov3 architecture. we have added a section of layers called "Yolo Head" to combine the encoder to the Yolo decoder. 
 
+Also, we were able to integrate the planar RCNN Model for predicting the mask and generating 3-D planes. The model was taken from the NVlabs Repo. This network detects the planer regions given a single RGB image and predicts 3D plane parameters together with a segmentation mask for each planar region. A Refinet model to further refine/optimize the masks of these detected planars is also added.  However, the model has been commented in this assignment code for we couldn't integrate the version with the latest one. The train functionality is also provided which we couldn't bring to the execution stage and henceforth commented too. 
 
 ## Dataset
 This dataset consists of around 3500 images containing four main classes:
@@ -26,12 +28,12 @@ For example, a group of construction workers without helmets, but with vests and
 The dataset is available under- https://drive.google.com/drive/u/1/folders/1nD1cdLk5y-rpmtiXH-JeU5vLvLLYVVyp
 It has three folders namely Depth, Labels, and Planes. And the main Dataset Zip file - YoloV3_Dataset.zip.
 
-1. ### Raw images
+### 1. Raw images
 The raw images are present in the zip folder. The images were collected by crowdsourcing and do not follow any particular naming convention.
 They are also of varied sizes. There are 3591 images.
 These are mostly .jpg files (< 0.5% might be otherwise)
 
-2. ### Bounding Boxes
+### 2. Bounding Boxes
 A Yolo compatible annotation tool was used to annotate the classes within these images.
 These are present under the labels folder as text files. However please note that not all raw images have a corresponding label. There are 3527 labeled text files. A few things to note:
 * Each image can contain 0 or more annotated regions.
@@ -41,7 +43,7 @@ These are present under the labels folder as text files. However please note tha
 * A label file corresponding to an image is a space-separated set of numbers. Each line corresponds to one annotated region in the image.
 The first column maps to the class of the annotated region (the order of the classes is as described above). The other four numbers represent the bounding boxes (ie annotated region) and stand for the x, y, width, and height parameters explained earlier. These four numbers should be between 0 and 1.
 
-3. ### Depth images
+### 3. Depth images
 Planes were created using this repo:
 https://github.com/NVlabs/planercnn
 These are .png files, make sure to handle them accordingly since the raw images are .jpg. There are 3545 planar images. The names are the same as that of the corresponding raw images.
@@ -50,5 +52,10 @@ These are .png files, make sure to handle them accordingly since the raw images 
 This dataset needs to be cleaned up further.
 * There are a few (<0.5%) png files among the raw images, which need to be removed (These do not have labels ie bounding boxes, nor do they have planar images).
 * There are a few (<0.5%) label files that are of invalid syntax (the x,y coordinates, or the width/height are > 1). These need to be discarded.
-* Final cleaned up dataset should only include data where all these three files are present for a raw image: labels text file, depth image and planar image.
+* Final cleaned up dataset should only include data where all these three files are present for a raw image: labels text file, depth image, and planar image.
+
+## Training
+We start training by loading the Yolo Ultralytics weights for the Yolo decoder layers and Midas weights for the Midas decoder layers. We train the Yolo branch by freezing the Resnet101 encoder layers and the Midas layers. We run the Yolo model with image size 64x64 for 50 epochs. We get the map value as 0.2 after training 64x64. Then we run the Yolo model with image size 128x128 for another 50 epochs passing the best weights. We get the map value as 0.408. Furthermore, we then run for another 50 epochs with image size 256x256 and get the map value as 0.525. The map value doesn't increase on training further.
+
+We then start training the Midas branch by freezing the Yolo layers and the encoder layers. we train till SSIM value is close to 1 (ie 1 - loss is as low as possible) by taking the previous best weights. Note- Because of the transformations used (Yolo's), this value was always very low. 
 
