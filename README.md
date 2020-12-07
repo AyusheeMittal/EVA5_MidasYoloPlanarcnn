@@ -12,28 +12,39 @@ The task of this assignment is to create a network that can perform 3 tasks simu
 
 An example output:
 Clockwise from top left: Raw image, Object Detection, Planes and Depth
+
 ![](https://github.com/AyusheeMittal/EVA5_MidasYoloPlanarcnn/blob/main/output.png)
 
-For this Assignment model, We take the Encoder-Decoder type of architecture as the output we aim to get is "Dense". So we take the Resnet101 Pretrained architecture as a common Encoder for both Yolo and Midas and add two separate branches for Yolo Decoder and Midas Decoder. We have made use of "**Transfer learning**" to finetune our model with respect to our inputs by loading the weights for the Midas layer as well as that of Yolo. The model structure looks like this - https://github.com/AyusheeMittal/EVA5_MidasYoloPlanarcnn/blob/main/model.png
+For this Assignment model, We take the Encoder-Decoder type of architecture as the output we aim to get is "Dense". So we take the Resnet101 Pretrained architecture as a common Encoder for both Yolo and Midas and add two separate branches for Yolo Decoder and Midas Decoder. We have made use of "**Transfer learning**" to finetune our model with respect to our inputs by loading the weights for the Midas layer as well as that of Yolo. The model structure looks like this 
 
+![](https://github.com/AyusheeMittal/EVA5_MidasYoloPlanarcnn/blob/main/model.png)
+
+The Pretrained ResnetEncoder has been taken from the Pytorch Hub, and the Midas layers were taken from https://github.com/intel-isl/MiDaS repo and added to the network and inverse depth maps are provided as the output which is of the same size as that of the input image.
 The Yolo layers have been taken from the Yolov3 architecture. we have added a section of layers called "Yolo Head" to combine the encoder with the Yolo decoder. The Yolo model aims at drawing the bounding box around the object to specify its location. Each bounding box has 4 descriptors, namely 
 1. Center of the box (bx, by)
 2. Width (bw)
 3. Height (bh)
 4. Value c corresponding to the class of an object ie the "Objectness"
+
 In the end, we use the "Non-Maximum Suppression" Algorithm to produce the final decision. It helps eliminate the unnecessary anchor boxes which are very close by performing the IOU(Intersection over Union) with the one having the highest class probability among them.
 The outputs produced are of size 52x52, 26x26, and 13x13 thus the detections are made at strides of 32, 16, 8 keeping in mind the images of very low resolution, medium resolution, and high resolution respectively.
 
 Also, we were able to integrate the planar RCNN Model for predicting the mask and generating 3-D planes. The model was taken from the NVlabs Repo. This network detects the planer regions given a single RGB image and predicts 3D plane parameters together with a segmentation mask for each planar region. A Refinet model to further refine/optimize the masks of these detected planars is also added.  However, the model has been commented in this assignment code for we couldn't integrate the version with the latest one. The train functionality is also provided which we couldn't bring to the execution stage and henceforth commented too. 
 
-## Training
-We start training by loading the Yolo Ultralytics weights for the Yolo decoder layers and Midas weights for the Midas decoder layers. 
+## Training 
+We start training by loading the Yolo Ultralytics weights for the Yolo decoder layers and Midas weights for the Midas decoder layers. The dataloader loads the input images and targets which are Yolo class labels and Midas greyscale ground truth. It modifies our input by resizing and applying padding to the image and accordingly shifting the center of the bounding box in the Yolo labels and resizes and pads Midas ground truth too.
 
-We train the Yolo branch by freezing the Resnet101 encoder layers and the Midas layers. We run the Yolo model with image size 64x64 for 50 epochs. We get the map value as 0.2 after training 64x64. Then we run the Yolo model with image size 128x128 for another 50 epochs passing the best weights. We get the map value as 0.408. Furthermore, we then run for another 50 epochs with image size 256x256 and get the map value as 0.525. The map value doesn't increase on training further.
+We train the Yolo branch by freezing the Resnet101 encoder layers and the Midas layers. We run the Yolo model with image size 64x64 for 50 epochs. We get the map value as 0.2 after training 64x64. Then we run the Yolo model with image size 128x128 for another 50 epochs passing the best weights. We get the map value as 0.408. Furthermore, we then run for another 50 epochs with image size 256x256 and get the map value as 0.525. The map value doesn't increase on training further with higher image size yet we prefer training on the image size of 416x416 for another 50 epochs for better learning of network. However, we could see the consistent Gradual growth of map during the entire training of Yolo. 
 
 We then start training the Midas branch by freezing the Yolo layers and the encoder layers. we train till SSIM value is close to 1 (ie 1 - loss is as low as possible) by taking the previous best weights. Note- Because of the transformations used (Yolo's), this value was always very low. 
 
-We then run a basic inference to see the Yolo outputs, and also to see the depth images.
+In the end, we run a basic inference to see the Yolo outputs, and also to see the depth images. We did not add augmentations while training either of the branches and could achieve good results.
+
+Not Done- Freeze the encoder, Yolo decoder, and Midas decoder. Enable only planarcnn decoder Use previous weights as a starting point. Train for xx epochs, check what the loss is. And finally, Unfreeze all layers, run the whole model with all losses adding up.
+
+
+## Loss Functions
+
 
 ## Dataset
 This dataset consists of around 3500 images containing four main classes:
